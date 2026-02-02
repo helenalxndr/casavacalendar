@@ -53,6 +53,8 @@ df_dashboard = build_dashboard_df(
     df_all=df_all,
     model=model,
     scaler=scaler,
+    encoder=encoder,
+    features=features,
     kecamatan=kecamatan,
     tanggal_acuan=tanggal_acuan
 )
