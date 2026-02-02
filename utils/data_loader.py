@@ -1,26 +1,45 @@
 import pandas as pd
+import streamlit as st
 import joblib
 from tensorflow.keras.models import load_model
 
 
+@st.cache_resource
 def load_all():
-    # 🔹 Load data
-    df_all = pd.read_csv(
-        "data.csv",
-        parse_dates=["tanggal"]
-    )
+    """
+    Load dataset, model LSTM global, scaler, encoder kecamatan,
+    dan daftar fitur (WAJIB konsisten dengan training).
+    """
 
-    df_all["kecamatan"] = df_all["kecamatan"].str.strip()
-    df_all = df_all.sort_values(["kecamatan", "tanggal"])
+    # ===============================
+    # LOAD DATA
+    # ===============================
+    df = pd.read_csv("data/data.csv")
+    df["index"] = pd.to_datetime(df["index"])
+    df["kecamatan"] = df["kecamatan"].str.strip()
+    df = df.sort_values(["kecamatan", "index"])
 
-    # 🔹 Load model & asset global
+    # ===============================
+    # LOAD MODEL GLOBAL
+    # ===============================
     model = load_model(
-        "models/global_lstm_kecamatan.h5",
+        "data/models/global_lstm_kecamatan.h5",
         compile=False
     )
 
-    scaler = joblib.load("scalers/global_scaler.pkl")
-    encoder = joblib.load("encoders/kecamatan_encoder.pkl")
-    features = joblib.load("features/feature_list.pkl")
+    # ===============================
+    # LOAD ASSET PENDUKUNG
+    # ===============================
+    scaler = joblib.load(
+        "data/scalers/global_scaler.pkl"
+    )
 
-    return df_all, model, scaler, encoder, features
+    encoder = joblib.load(
+        "data/encoders/kecamatan_encoder.pkl"
+    )
+
+    features = joblib.load(
+        "data/features/feature_list.pkl"
+    )
+
+    return df, model, scaler, encoder, features
