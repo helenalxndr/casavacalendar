@@ -1,91 +1,148 @@
-import sys
-from pathlib import Path
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
-if str(ROOT_DIR) not in sys.path:
-    sys.path.insert(0, str(ROOT_DIR))
-
 import streamlit as st
-from components.header import render_header
-from components.calendar_view import render_calendar
-from components.detail_panel import render_detail_panel
-from components.summary_cards import render_summary
-from utils.data_loader import load_all
-from utils.forecast import build_dashboard_df
+import calendar
+from datetime import datetime
+import numpy as np
+import pandas as pd
 
+from utils.loader import load_all
+from utils.forecast import recursive_forecast
+from utils.rbs import rbs_singkong
 
-# ===============================
-# PAGE CONFIG
-# ===============================
+# ==============================
+# CONFIG
+# ==============================
 st.set_page_config(
     page_title="Kalender Tanam Singkong",
     layout="wide"
 )
 
-st.title("📅 Kalender Tanam Singkong")
-st.caption("Prediksi waktu tanam berbasis LSTM dan data iklim")
-
-
-# ===============================
-# LOAD RESOURCE (CACHED)
-# ===============================
+# ==============================
+# LOAD RESOURCE (CACHE)
+# ==============================
 @st.cache_resource
-def load_resources():
+def init():
     return load_all()
 
-df_all, model, scaler, encoder, features = load_resources()
+model, encoder, scaler, data = init()
 
+# ==============================
+# SIDEBAR
+# ==============================
+st.sidebar.title("Lokasi")
 
-# ===============================
-# HEADER (FILTER)
-# ===============================
-kecamatan, tanggal_acuan = render_header(df_all)
-
-if kecamatan is None or tanggal_acuan is None:
-    st.info("Silakan pilih kecamatan dan tanggal terlebih dahulu.")
-    st.stop()
-
-
-# ===============================
-# BUILD DASHBOARD DATA
-# ===============================
-df_dashboard = build_dashboard_df(
-    df_all=df_all,
-    model=model,
-    scaler=scaler,
-    encoder=encoder,
-    features=features,
-    kecamatan=kecamatan,
-    tanggal_acuan=tanggal_acuan
+kecamatan = st.sidebar.selectbox(
+    "Pilih Kecamatan",
+    encoder.classes_
 )
 
-if df_dashboard.empty:
-    st.warning("Data tidak tersedia untuk pilihan tersebut.")
-    st.stop()
+kec_id = encoder.transform([kecamatan])[0]
 
+# ==============================
+# AMBIL 270 HARI TERAKHIR
+# ==============================
+df_kec = data[data["kecamatan"] == kecamatan] \
+            .sort_values("tanggal")
 
-# ===============================
-# LAYOUT
-# ===============================
-col_kal, col_detail = st.columns([3, 2])
+rain_last270 = df_kec["rain_mm"].values[-270:]
 
-with col_kal:
-    calendar_state = render_calendar(
-        df_dashboard=df_dashboard,
-        tanggal_acuan=tanggal_acuan
+# ==============================
+# FORECAST 30 HARI
+# ==============================
+forecast = recursive_forecast(
+    model,
+    scaler,
+    rain_last270,
+    kec_id,
+    days=30
+)
+
+# ==============================
+# SET BULAN AKTIF
+# ==============================
+today = datetime.today()
+year = today.year
+month = today.month
+days = calendar.monthrange(year, month)[1]
+
+predictions = forecast[:days]
+
+if "selected_day" not in st.session_state:
+    st.session_state.selected_day = 1
+
+# ==============================
+# UI
+# ==============================
+st.title("Kalender Tanam Singkong")
+st.caption("Rekomendasi aktivitas berdasarkan prediksi curah hujan harian")
+
+left, right = st.columns([2.5,1])
+
+# ==============================
+# KALENDER
+# ==============================
+with left:
+
+    st.subheader(calendar.month_name[month] + " " + str(year))
+
+    cal = calendar.monthcalendar(year, month)
+
+    for week in cal:
+        cols = st.columns(7)
+
+        for i, day in enumerate(week):
+
+            if day != 0 and day <= len(predictions):
+
+                hujan = predictions[day-1]
+                aktivitas = rbs_singkong(hujan)
+
+                if cols[i].button(
+                    f"{day}\n{aktivitas}",
+                    key=f"day_{day}"
+                ):
+                    st.session_state.selected_day = day
+
+# ==============================
+# DETAIL PANEL
+# ==============================
+with right:
+
+    selected = st.session_state.selected_day
+
+    hujan = predictions[selected-1]
+    aktivitas = rbs_singkong(hujan)
+
+    st.subheader("Detail Tanggal")
+
+    st.write(
+        f"**Tanggal:** {selected} "
+        f"{calendar.month_name[month]} {year}"
     )
 
-with col_detail:
-    if calendar_state:
-        render_detail_panel(
-            df_dashboard=df_dashboard,
-            calendar_state=calendar_state
-        )
-    else:
-        st.info("Klik salah satu tanggal pada kalender untuk melihat detail.")
+    st.metric(
+        "Prediksi Hujan",
+        f"{hujan:.2f} mm"
+    )
 
+    st.write("Aktivitas:", aktivitas)
 
-# ===============================
-# SUMMARY
-# ===============================
-render_summary(df_dashboard)
+    st.markdown("---")
+
+    df_summary = pd.DataFrame({
+        "hujan": predictions
+    })
+
+    df_summary["aktivitas"] = \
+        df_summary["hujan"].apply(rbs_singkong)
+
+    st.write("Hari tanam:",
+             (df_summary["aktivitas"]=="Penanaman").sum())
+
+    st.write("Hari pupuk:",
+             (df_summary["aktivitas"]=="Pemupukan").sum())
+
+    st.write("Hari hama:",
+             (df_summary["aktivitas"]=="Pembersihan Hama").sum())
+
+    st.write("Hari panen:",
+             (df_summary["aktivitas"]=="Panen").sum())
