@@ -45,10 +45,17 @@ kec_id = encoder.transform([kecamatan])[0]
 # ==============================
 # AMBIL 270 HARI TERAKHIR
 # ==============================
-df_kec = data[data["kecamatan"] == kecamatan] \
-            .sort_values("tanggal")
+if "tanggal" not in data.columns:
+    if "index" in data.columns:
+        data["tanggal"] = pd.to_datetime(data["index"])
+    else:
+        st.error("Kolom tanggal tidak ditemukan.")
+        st.stop()
 
-rain_last270 = df_kec["rain_mm"].values[-270:]
+df_kec = (
+    data[data["kecamatan"] == kecamatan]
+    .sort_values("tanggal")
+)
 
 # ==============================
 # FORECAST 30 HARI
