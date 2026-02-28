@@ -1,26 +1,14 @@
 def kategori_hujan(hujan_mm):
-    """
-    Klasifikasi curah hujan:
-    Rendah   : < 5 mm
-    Normal   : 5–15 mm
-    Tinggi   : > 15 mm
-    """
     if hujan_mm < 5:
         return "Rendah"
-    elif 5 <= hujan_mm <= 15:
+    elif hujan_mm <= 15:
         return "Normal"
-    else:
-        return "Tinggi"
+    return "Tinggi"
 
 
 def rbs_singkong_final(hujan_mm, hst):
-    """
-    Rule-Based System Kalender Tanam Singkong
-    berbasis HST dan kategori curah hujan.
-    """
 
     kategori = kategori_hujan(hujan_mm)
-
 
     if hst < 0:
 
@@ -35,7 +23,6 @@ def rbs_singkong_final(hujan_mm, hst):
 
         return "Menunggu Kondisi Tanam — Evaluasi kelembapan tanah."
 
-
     if 0 <= hst <= 30:
 
         if kategori == "Rendah":
@@ -46,7 +33,6 @@ def rbs_singkong_final(hujan_mm, hst):
 
         return "Pemantauan Awal — Kelembapan cukup untuk pertumbuhan awal."
 
-    
     if 31 <= hst <= 90:
 
         if kategori == "Normal" and hst <= 60:
@@ -59,7 +45,6 @@ def rbs_singkong_final(hujan_mm, hst):
             return "Penyiangan Gulma — Hujan tinggi memicu pertumbuhan gulma."
 
         return "Pemantauan Vegetatif — Pertumbuhan berlangsung normal."
-
 
     if 91 <= hst <= 180:
 
@@ -74,7 +59,6 @@ def rbs_singkong_final(hujan_mm, hst):
 
         return "Pemantauan Umbi — Kondisi relatif stabil."
 
-
     if hst > 180:
 
         if hst > 240 and kategori == "Rendah":
@@ -85,5 +69,23 @@ def rbs_singkong_final(hujan_mm, hst):
 
         return "Siap Panen — Evaluasi ukuran dan kualitas umbi."
 
-
     return "Pemantauan Rutin — Lanjutkan observasi lapangan."
+
+def label_singkat(aktivitas):
+
+    if "Tanam" in aktivitas:
+        return "Penanaman"
+
+    if "Pemupukan" in aktivitas:
+        return "Pemupukan"
+
+    if "Penyiraman" in aktivitas:
+        return "Penyiraman"
+
+    if "Gulma" in aktivitas:
+        return "Pembersihan Gulma"
+
+    if "Panen" in aktivitas:
+        return "Pemanenan"
+
+    return "Pemantauan"
