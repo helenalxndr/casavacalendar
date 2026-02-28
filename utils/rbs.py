@@ -19,15 +19,23 @@ def rbs_singkong_final(hujan_mm, hst):
     berbasis HST dan kategori curah hujan.
     """
 
-    # Tanaman belum ditanam
-    if hst < 0:
-        return "Belum Tanam"
-
     kategori = kategori_hujan(hujan_mm)
 
-    # =========================================
-    # FASE 1: 0–30 HST (Perkecambahan & Awal)
-    # =========================================
+
+    if hst < 0:
+
+        if kategori == "Normal":
+            return "Waktu Tanam Ideal — Kelembapan cukup untuk memulai penanaman."
+
+        if kategori == "Rendah":
+            return "Tunda Tanam — Tanah terlalu kering, risiko gagal tumbuh tinggi."
+
+        if kategori == "Tinggi":
+            return "Tunda Tanam — Risiko genangan dan busuk batang tinggi."
+
+        return "Menunggu Kondisi Tanam — Evaluasi kelembapan tanah."
+
+
     if 0 <= hst <= 30:
 
         if kategori == "Rendah":
@@ -38,10 +46,7 @@ def rbs_singkong_final(hujan_mm, hst):
 
         return "Pemantauan Awal — Kelembapan cukup untuk pertumbuhan awal."
 
-
-    # =========================================
-    # FASE 2: 31–90 HST (Vegetatif)
-    # =========================================
+    
     if 31 <= hst <= 90:
 
         if kategori == "Normal" and hst <= 60:
@@ -56,9 +61,6 @@ def rbs_singkong_final(hujan_mm, hst):
         return "Pemantauan Vegetatif — Pertumbuhan berlangsung normal."
 
 
-    # =========================================
-    # FASE 3: 91–180 HST (Pembentukan Umbi)
-    # =========================================
     if 91 <= hst <= 180:
 
         if kategori == "Normal" and hst <= 150:
@@ -73,9 +75,6 @@ def rbs_singkong_final(hujan_mm, hst):
         return "Pemantauan Umbi — Kondisi relatif stabil."
 
 
-    # =========================================
-    # FASE 4: > 180 HST (Pematangan & Panen)
-    # =========================================
     if hst > 180:
 
         if hst > 240 and kategori == "Rendah":
