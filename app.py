@@ -6,7 +6,7 @@ import pandas as pd
 
 from utils.loader import load_all
 from utils.forecast import recursive_forecast
-from utils.rbs import rbs_singkong
+from utils.rbs import rbs_singkong_final
 
 # ==============================
 # CONFIG
@@ -17,7 +17,7 @@ st.set_page_config(
 )
 
 # ==============================
-# LOAD RESOURCE (CACHE)
+# LOAD RESOURCE
 # ==============================
 @st.cache_resource
 def init():
@@ -28,11 +28,16 @@ model, encoder, scaler, data = init()
 # ==============================
 # SIDEBAR
 # ==============================
-st.sidebar.title("Lokasi")
+st.sidebar.title("Pengaturan")
 
 kecamatan = st.sidebar.selectbox(
     "Pilih Kecamatan",
     encoder.classes_
+)
+
+tanggal_tanam = st.sidebar.date_input(
+    "Tanggal Tanam",
+    value=datetime.today()
 )
 
 kec_id = encoder.transform([kecamatan])[0]
@@ -57,7 +62,7 @@ forecast = recursive_forecast(
 )
 
 # ==============================
-# SET BULAN AKTIF
+# SET BULAN
 # ==============================
 today = datetime.today()
 year = today.year
@@ -70,12 +75,12 @@ if "selected_day" not in st.session_state:
     st.session_state.selected_day = 1
 
 # ==============================
-# UI
+# UI HEADER
 # ==============================
 st.title("Kalender Tanam Singkong")
-st.caption("Rekomendasi aktivitas berdasarkan prediksi curah hujan harian")
+st.caption("Rekomendasi berbasis Prediksi Curah Hujan + Fase Pertumbuhan (HST)")
 
-left, right = st.columns([2.5,1])
+left, right = st.columns([2.5, 1])
 
 # ==============================
 # KALENDER
@@ -94,10 +99,15 @@ with left:
             if day != 0 and day <= len(predictions):
 
                 hujan = predictions[day-1]
-                aktivitas = rbs_singkong(hujan)
+
+                # Hitung HST per tanggal
+                tanggal_prediksi = datetime(year, month, day)
+                hst = (tanggal_prediksi.date() - tanggal_tanam).days
+
+                aktivitas = rbs_singkong_final(hujan, hst)
 
                 if cols[i].button(
-                    f"{day}\n{aktivitas}",
+                    f"{day}\n{aktivitas.split('—')[0]}",
                     key=f"day_{day}"
                 ):
                     st.session_state.selected_day = day
@@ -110,7 +120,11 @@ with right:
     selected = st.session_state.selected_day
 
     hujan = predictions[selected-1]
-    aktivitas = rbs_singkong(hujan)
+
+    tanggal_selected = datetime(year, month, selected)
+    hst_selected = (tanggal_selected.date() - tanggal_tanam).days
+
+    aktivitas = rbs_singkong_final(hujan, hst_selected)
 
     st.subheader("Detail Tanggal")
 
@@ -119,30 +133,37 @@ with right:
         f"{calendar.month_name[month]} {year}"
     )
 
+    st.write(f"**HST:** {hst_selected} hari")
+
     st.metric(
         "Prediksi Hujan",
         f"{hujan:.2f} mm"
     )
 
-    st.write("Aktivitas:", aktivitas)
+    st.markdown("### Rekomendasi")
+    st.info(aktivitas)
 
     st.markdown("---")
 
-    df_summary = pd.DataFrame({
-        "hujan": predictions
-    })
+    # ==============================
+    # RINGKASAN BULANAN
+    # ==============================
+    summary = []
 
-    df_summary["aktivitas"] = \
-        df_summary["hujan"].apply(rbs_singkong)
+    for day in range(1, len(predictions)+1):
+        tanggal_loop = datetime(year, month, day)
+        hst_loop = (tanggal_loop.date() - tanggal_tanam).days
+        hujan_loop = predictions[day-1]
+        aktivitas_loop = rbs_singkong_final(hujan_loop, hst_loop)
+        summary.append(aktivitas_loop.split("—")[0])
 
-    st.write("Hari tanam:",
-             (df_summary["aktivitas"]=="Penanaman").sum())
+    df_summary = pd.Series(summary)
 
-    st.write("Hari pupuk:",
-             (df_summary["aktivitas"]=="Pemupukan").sum())
+    st.subheader("Ringkasan Aktivitas")
 
-    st.write("Hari hama:",
-             (df_summary["aktivitas"]=="Pembersihan Hama").sum())
-
-    st.write("Hari panen:",
-             (df_summary["aktivitas"]=="Panen").sum())
+    for aktivitas in df_summary.value_counts().index:
+        st.write(
+            aktivitas,
+            ":",
+            df_summary.value_counts()[aktivitas]
+        )
