@@ -18,11 +18,13 @@ def render_calendar(df_dashboard, tanggal_acuan):
             "initialDate": tanggal_acuan.strftime("%Y-%m-%d"),
             "locale": "id",
             "height": 650,
-            "selectable": True,     # 🔥 WAJIB
-            "dateClick": True,      # 🔥 WAJIB
+            "selectable": True,   
+            "dateClick": True,     
             "headerToolbar": {
-                "left": "",
+                "left": "prev,next today",
+                "left": ""
                 "center": "title",
+                "right": "dayGridMonth"
                 "right": ""
             }
         },
