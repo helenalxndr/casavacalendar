@@ -3,7 +3,7 @@ import pandas as pd
 from tensorflow.keras.models import load_model
 
 def load_all():
-    model = load_model("model/best_lstm_multikecamatan.h5")
+    model = load_model("model/best_lstm_multikecamatan.h5", compile=False)
     encoder = joblib.load("model/label_encoder_kecamatan.pkl")
     scaler = joblib.load("model/scaler_rain.pkl")
     data = pd.read_csv("data/data_fix.csv")
