@@ -45,11 +45,41 @@ kec_id = encoder.transform([kecamatan])[0]
 # ==============================
 # AMBIL 270 HARI TERAKHIR
 # ==============================
+# ==============================
+# AMBIL 270 HARI TERAKHIR
+# ==============================
+
+# Pastikan kolom tanggal ada
+if "index" in data.columns:
+    data["tanggal"] = pd.to_datetime(data["index"])
+elif "tanggal" in data.columns:
+    data["tanggal"] = pd.to_datetime(data["tanggal"])
+else:
+    st.error("Kolom tanggal/index tidak ditemukan.")
+    st.stop()
+
+# Pastikan kolom hujan ada
+if "rain_mm" not in data.columns:
+    if "curah_hujan_mm" in data.columns:
+        data["rain_mm"] = data["curah_hujan_mm"]
+    else:
+        st.error("Kolom curah hujan tidak ditemukan.")
+        st.stop()
+
 df_kec = (
     data[data["kecamatan"] == kecamatan]
-    .sort_values("index")
+    .sort_values("tanggal")
 )
 
+if df_kec.empty:
+    st.error("Data kecamatan tidak ditemukan.")
+    st.stop()
+
+if len(df_kec) < 270:
+    st.error("Data historis kurang dari 270 hari.")
+    st.stop()
+
+rain_last270 = df_kec["rain_mm"].values[-270:]
 # ==============================
 # FORECAST 30 HARI
 # ==============================
