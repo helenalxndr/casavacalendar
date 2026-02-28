@@ -22,10 +22,8 @@ def render_calendar(df_dashboard, tanggal_acuan):
             "dateClick": True,     
             "headerToolbar": {
                 "left": "prev,next today",
-                "left": ""
                 "center": "title",
                 "right": "dayGridMonth"
-                "right": ""
             }
         },
         key="kalender"
