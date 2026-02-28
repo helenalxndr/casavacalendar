@@ -45,16 +45,9 @@ kec_id = encoder.transform([kecamatan])[0]
 # ==============================
 # AMBIL 270 HARI TERAKHIR
 # ==============================
-if "tanggal" not in data.columns:
-    if "index" in data.columns:
-        data["tanggal"] = pd.to_datetime(data["index"])
-    else:
-        st.error("Kolom tanggal tidak ditemukan.")
-        st.stop()
-
 df_kec = (
     data[data["kecamatan"] == kecamatan]
-    .sort_values("tanggal")
+    .sort_values("index")
 )
 
 # ==============================
