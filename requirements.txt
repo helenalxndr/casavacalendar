@@ -1,7 +1,7 @@
-streamlit
-tensorflow
-numpy
+streamlit==1.32.0
+tensorflow==2.15.0
+keras==2.15.0
+numpy==1.26.4
 pandas
 scikit-learn
 joblib
-streamlit-calendar
