@@ -24,7 +24,6 @@ def init():
 
 model, encoder, scaler, data = init()
 
-# Aman rename kolom
 if "index" in data.columns:
     data["tanggal"] = pd.to_datetime(data["index"])
 
@@ -54,7 +53,7 @@ rain_last270 = df_kec["rain_mm"].values[-270:]
 forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
 
 # =====================================================
-# STATE BULAN
+# STATE
 # =====================================================
 if "month" not in st.session_state:
     st.session_state.month = datetime.today().month
@@ -91,8 +90,7 @@ year = st.session_state.year
 
 with col2:
     st.markdown(
-        f"<h2 style='text-align:center;color:#1F2937;'>"
-        f"{calendar.month_name[month]} {year}</h2>",
+        f"<h2 style='text-align:center;'>{calendar.month_name[month]} {year}</h2>",
         unsafe_allow_html=True
     )
 
@@ -100,39 +98,49 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =====================================================
-# CSS AESTHETIC
+# CSS (RESPONSIVE & CENTER FIX)
 # =====================================================
 st.markdown("""
 <style>
 
-.main {
-    background-color:#F8FAFC;
-}
-
-div[data-testid="column"] {
-    padding:2px !important;
-}
-
-div[data-testid="stHorizontalBlock"] {
-    gap:6px !important;
-}
-
-div.stButton > button {
+.calendar-card {
     height:95px;
     border-radius:12px;
     border:1px solid #E5E7EB;
     background:#FFFFFF;
-    text-align:left;
     padding:10px;
-    font-size:13px;
-    font-weight:500;
-    white-space:pre-line;
-    transition:all 0.2s ease;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    transition:0.2s;
+    text-align:center;
 }
 
-div.stButton > button:hover {
+.calendar-card:hover {
     background:#F1F5F9;
-    transform:scale(1.02);
+}
+
+.calendar-date {
+    font-weight:600;
+    font-size:16px;
+}
+
+.calendar-label {
+    font-size:13px;
+    font-weight:600;
+    margin-top:4px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .calendar-card {
+        height:80px;
+        padding:6px;
+    }
+    .calendar-label {
+        font-size:11px;
+    }
 }
 
 </style>
@@ -141,6 +149,14 @@ div.stButton > button:hover {
 # =====================================================
 # COLOR MAP
 # =====================================================
+label_color = {
+    "Penanaman": "#059669",
+    "Pemupukan": "#7C3AED",
+    "Penyiraman": "#0EA5E9",
+    "Pembersihan Gulma": "#F59E0B",
+    "Pemanenan": "#DC2626",
+    "Pemantauan": "#6B7280"
+}
 
 # =====================================================
 # LAYOUT
@@ -160,7 +176,6 @@ with left:
         )
 
     cal = calendar.monthcalendar(year, month)
-    today = datetime.today()
 
     for week in cal:
         cols = st.columns(7)
@@ -176,26 +191,24 @@ with left:
 
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
+                warna = label_color.get(label, "#374151")
 
-                is_today = (
-                    day == today.day and
-                    month == today.month and
-                    year == today.year
+                # Card HTML
+                cols[i].markdown(
+                    f"""
+                    <div class="calendar-card">
+                        <div class="calendar-date">{day}</div>
+                        <div class="calendar-label" style="color:{warna};">
+                            {label}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
                 )
 
-                is_selected = day == st.session_state.selected_day
-
-                text = f"{day}\n{label}"
-
-                if cols[i].button(text, key=f"day_{day}", use_container_width=True):
+                # Invisible button overlay (clickable)
+                if cols[i].button(" ", key=f"day_{day}", use_container_width=True):
                     st.session_state.selected_day = day
-
-                # highlight visual fix
-                if is_today:
-                    cols[i].markdown(
-                        "<style>button[kind='secondary'] {background:#ECFDF5 !important;}</style>",
-                        unsafe_allow_html=True
-                    )
 
 # =====================================================
 # DETAIL PANEL
