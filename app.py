@@ -126,6 +126,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# =========================
+# MAIN LAYOUT
+# =========================
+# DEFINISIKAN KOLOM TERLEBIH DAHULU
+col1, col2 = st.columns([3, 1])
+
 with col1:
     today = datetime.today()
     year = today.year
@@ -135,7 +141,7 @@ with col1:
 
     cal = calendar.monthcalendar(year, month)
 
-    # Buat header hari terlebih dahulu
+    # Buat header hari
     nama_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
     header_html = "".join([f"<div style='text-align:center; font-weight:bold; color:#6b7280;'>{h}</div>" for h in nama_hari])
 
@@ -157,24 +163,23 @@ with col1:
 
                 selected = "selected" if st.session_state.selected_day == day else ""
                 
-                # Gabungkan konten ke dalam satu baris string tanpa newline yang tidak perlu
-                body_html += f'<div class="day-card {selected}" onclick="window.location.href=\'?day={day}\'"><div class="day-number">{day}</div>'
+                body_html += f'<div class="day-card {selected}" onclick="window.location.href=\'?day={day}\'">'
+                body_html += f'<div class="day-number">{day}</div>'
                 if label:
                     body_html += f'<div class="label {clss}">{label}</div>'
                 body_html += '</div>'
 
-    # GABUNGKAN SEMUA ke dalam satu kontainer utama
+    # GABUNGKAN SEMUA
     full_calendar_html = f"""
     <div class="calendar">
         {header_html}
         {body_html}
     </div>
     """
-
-    # RENDER SEKALIGUS
     st.markdown(full_calendar_html, unsafe_allow_html=True)
+
 # =========================
-# HANDLE CLICK
+# HANDLE CLICK (Letakkan di luar with col1 agar sinkron)
 # =========================
 query_params = st.query_params
 if "day" in query_params:
@@ -184,12 +189,20 @@ if "day" in query_params:
 # DETAIL PANEL
 # =========================
 with col2:
-
     selected_day = st.session_state.selected_day
-    selected_date = datetime(year, month, selected_day).date()
-    hst = (selected_date - tanggal_tanam).days
+    
+    # Proteksi jika selected_day tidak ada di bulan ini (misal ganti bulan)
+    try:
+        selected_date = datetime(year, month, selected_day).date()
+    except ValueError:
+        selected_day = 1
+        selected_date = datetime(year, month, selected_day).date()
 
-    rain_pred = forecast_30[selected_day-1]
+    hst = (selected_date - tanggal_tanam).days
+    
+    # Ambil prediksi hujan (pastikan index tidak out of range)
+    idx = min(selected_day - 1, len(forecast_30) - 1)
+    rain_pred = forecast_30[idx]
 
     st.markdown("### Detail Rekomendasi")
     st.write(f"📅 {selected_date}")
