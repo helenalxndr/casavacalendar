@@ -138,29 +138,28 @@ with col1:
 
     st.markdown(f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>", unsafe_allow_html=True)
 
-    # Ambil struktur minggu dan hari dari library calendar
+    # Ambil data kalender (list of lists)
     cal = calendar.monthcalendar(year, month)
 
-    # MEMBUAT STRING HTML KALENDER
+    # 1. Mulai pembungkus grid utama
     calendar_html = "<div class='calendar'>"
 
-    # 1. Tambahkan Header Nama Hari
-    nama_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
-    for nh in nama_hari:
-        calendar_html += f"<div style='text-align:center; font-weight:bold; color:#6b7280; font-size:13px;'>{nh}</div>"
+    # 2. Tambahkan Header Nama Hari
+    days_header = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+    for day_name in days_header:
+        calendar_html += f"<div style='text-align:center; font-weight:bold; color:#6b7280; font-size:12px;'>{day_name}</div>"
 
-    # 2. Tambahkan Tanggal-tanggal
+    # 3. Looping untuk mengisi tanggal
     for week in cal:
         for day in week:
             if day == 0:
-                # Kolom kosong untuk hari di luar bulan berjalan
+                # Kotak kosong untuk hari di luar bulan berjalan
                 calendar_html += "<div></div>"
             else:
-                # Hitung HST (Hari Setelah Tanam)
+                # Logika HST & Label
                 current_date = datetime(year, month, day).date()
                 hst = (current_date - tanggal_tanam).days
 
-                # Tentukan label dan class CSS berdasarkan HST
                 if hst < 0:
                     label, label_class = "", ""
                 elif hst < 5:
@@ -170,10 +169,10 @@ with col1:
                 else:
                     label, label_class = "Panen", "panen"
 
-                # Cek apakah hari ini sedang dipilih (Selected)
+                # Logika seleksi (border biru)
                 selected_class = "selected" if st.session_state.selected_day == day else ""
 
-                # Gabungkan ke dalam string HTML
+                # Masukkan konten kotak ke dalam string HTML
                 calendar_html += f"""
                 <div class="day-card {selected_class}" 
                      onclick="window.location.href='?day={day}'">
@@ -182,9 +181,10 @@ with col1:
                 </div>
                 """
 
-    calendar_html += "</div>" # Tutup div class 'calendar'
+    # 4. Tutup pembungkus grid
+    calendar_html += "</div>"
 
-    # Tampilkan seluruh kalender dalam satu kali panggil
+    # 5. TAMPILKAN SEMUA SEKALIGUS (Ini kuncinya!)
     st.markdown(calendar_html, unsafe_allow_html=True)
 # =========================
 # HANDLE CLICK
