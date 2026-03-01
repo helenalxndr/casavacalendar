@@ -6,12 +6,13 @@ from datetime import datetime
 from utils.loader import load_all
 from utils.forecast import recursive_forecast
 
-st.set_page_config(page_title="Kalender Tanam Singkong", layout="wide")
+st.set_page_config(layout="wide")
 
 # =========================
 # LOAD DATA
 # =========================
 model, encoder, scaler, data = load_all()
+data["index"] = pd.to_datetime(data["index"])
 
 # =========================
 # SIDEBAR
@@ -29,9 +30,9 @@ tanggal_tanam = st.sidebar.date_input("Tanggal Tanam")
 kec_id = encoder.transform([selected_kecamatan])[0]
 
 df_kec = data[data["kecamatan"] == selected_kecamatan].copy()
-df_kec = df_kec.sort_values("tanggal")
+df_kec = df_kec.sort_values("index")
 
-rain_last270 = df_kec["rain_mm"].values[-270:]
+rain_last270 = df_kec["curah_hujan_mm"].values[-270:]
 
 forecast_30 = recursive_forecast(
     model=model,
