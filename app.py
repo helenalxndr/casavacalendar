@@ -1,215 +1,241 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
 import calendar
 from datetime import datetime
+import pandas as pd
+
 from utils.loader import load_all
 from utils.forecast import recursive_forecast
+from utils.rbs import rbs_singkong_final, label_singkat
 
-st.set_page_config(layout="wide")
-
-# =========================
-# LOAD DATA
-# =========================
-model, encoder, scaler, data = load_all()
-
-# =========================
-# SIDEBAR
-# =========================
-st.sidebar.title("⚙ Pengaturan")
-
-kecamatan_list = sorted(data["kecamatan"].unique())
-selected_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kecamatan_list)
-
-tanggal_tanam = st.sidebar.date_input("Tanggal Tanam")
-
-# =========================
-# FILTER DATA
-# =========================
-kec_id = encoder.transform([selected_kecamatan])[0]
-
-df_kec = data[data["kecamatan"] == selected_kecamatan].copy()
-df_kec = df_kec.sort_values("tanggal")
-
-rain_last270 = df_kec["rain_mm"].values[-270:]
-
-forecast_30 = recursive_forecast(
-    model=model,
-    scaler=scaler,
-    rain_last270=rain_last270,
-    kec_id=kec_id,
-    days=30
+# =====================================================
+# PAGE CONFIG
+# =====================================================
+st.set_page_config(
+    page_title="Kalender Tanam Singkong",
+    layout="wide"
 )
 
-# =========================
-# SESSION STATE
-# =========================
-if "selected_day" not in st.session_state:
-    st.session_state.selected_day = 1
+# =====================================================
+# LOAD DATA
+# =====================================================
+@st.cache_resource
+def init():
+    return load_all()
 
-# =========================
-# CSS
-# =========================
+model, encoder, scaler, data = init()
+
+if "index" in data.columns:
+    data["tanggal"] = pd.to_datetime(data["index"])
+
+if "curah_hujan_mm" in data.columns:
+    data["rain_mm"] = data["curah_hujan_mm"]
+
+# =====================================================
+# SIDEBAR
+# =====================================================
+st.sidebar.title("⚙ Pengaturan")
+
+kecamatan = st.sidebar.selectbox("Pilih Kecamatan", encoder.classes_)
+tanggal_tanam = st.sidebar.date_input("Tanggal Tanam", value=datetime.today())
+
+kec_id = encoder.transform([kecamatan])[0]
+
+# =====================================================
+# FILTER DATA
+# =====================================================
+df_kec = data[data["kecamatan"] == kecamatan].sort_values("tanggal")
+
+if len(df_kec) < 270:
+    st.error("Data historis kurang dari 270 hari.")
+    st.stop()
+
+rain_last270 = df_kec["rain_mm"].values[-270:]
+forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
+
+# =====================================================
+# STATE
+# =====================================================
+if "month" not in st.session_state:
+    st.session_state.month = datetime.today().month
+
+if "year" not in st.session_state:
+    st.session_state.year = datetime.today().year
+
+if "selected_day" not in st.session_state:
+    st.session_state.selected_day = datetime.today().day
+
+# =====================================================
+# NAVIGASI
+# =====================================================
+col1, col2, col3 = st.columns([1,6,1])
+
+with col1:
+    if st.button("◀"):
+        if st.session_state.month == 1:
+            st.session_state.month = 12
+            st.session_state.year -= 1
+        else:
+            st.session_state.month -= 1
+
+with col3:
+    if st.button("▶"):
+        if st.session_state.month == 12:
+            st.session_state.month = 1
+            st.session_state.year += 1
+        else:
+            st.session_state.month += 1
+
+month = st.session_state.month
+year = st.session_state.year
+
+with col2:
+    st.markdown(
+        f"<h2 style='text-align:center;'>{calendar.month_name[month]} {year}</h2>",
+        unsafe_allow_html=True
+    )
+
+days_in_month = calendar.monthrange(year, month)[1]
+predictions = forecast[:days_in_month]
+
+# =====================================================
+# CSS (RESPONSIVE & CENTER FIX)
+# =====================================================
 st.markdown("""
 <style>
 
-/* Kalender Grid */
-.calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+.calendar-card {
+    height:95px;
+    border-radius:12px;
+    border:1px solid #E5E7EB;
+    background:#FFFFFF;
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    transition:0.2s;
+    text-align:center;
 }
 
-/* Day Card */
-.day-card {
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    padding: 10px 6px;
-    min-height: 70px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    cursor: pointer;
-    transition: 0.2s;
+.calendar-card:hover {
+    background:#F1F5F9;
 }
 
-.day-card:hover {
-    background-color: #f3f4f6;
+.calendar-date {
+    font-weight:600;
+    font-size:16px;
 }
 
-/* Day Number */
-.day-number {
-    font-weight: 600;
-    font-size: 14px;
-    color: #1f2937;
+.calendar-label {
+    font-size:13px;
+    font-weight:600;
+    margin-top:4px;
 }
 
-/* Label */
-.label {
-    font-size: 11px;
-    margin-top: 4px;
-    font-weight: 600;
-}
-
-/* Highlight warna hanya pada label */
-.label.pemupukan {
-    background-color: #ede9fe;
-    color: #6d28d9;
-    padding: 2px 6px;
-    border-radius: 6px;
-    display: inline-block;
-}
-
-.label.pemantauan {
-    background-color: #e0f2fe;
-    color: #0369a1;
-    padding: 2px 6px;
-    border-radius: 6px;
-    display: inline-block;
-}
-
-.label.panen {
-    background-color: #dcfce7;
-    color: #166534;
-    padding: 2px 6px;
-    border-radius: 6px;
-    display: inline-block;
-}
-
-/* Selected Day */
-.selected {
-    border: 2px solid #2563eb;
-    background-color: #eff6ff;
+/* Responsive */
+@media (max-width: 1200px) {
+    .calendar-card {
+        height:80px;
+        padding:6px;
+    }
+    .calendar-label {
+        font-size:11px;
+    }
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# MAIN LAYOUT
-# =========================
-col1, col2 = st.columns([3,1])
+# =====================================================
+# COLOR MAP
+# =====================================================
+label_color = {
+    "Penanaman": "#059669",
+    "Pemupukan": "#7C3AED",
+    "Penyiraman": "#0EA5E9",
+    "Pembersihan Gulma": "#F59E0B",
+    "Pemanenan": "#DC2626",
+    "Pemantauan": "#6B7280"
+}
 
-with col1:
+# =====================================================
+# LAYOUT
+# =====================================================
+left, right = st.columns([2.5,1])
 
-    today = datetime.today()
-    year = today.year
-    month = today.month
+# =====================================================
+# KALENDER
+# =====================================================
+with left:
 
-    st.markdown(f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>", unsafe_allow_html=True)
+    header = st.columns(7)
+    for i, d in enumerate(["Sen","Sel","Rab","Kam","Jum","Sab","Min"]):
+        header[i].markdown(
+            f"<div style='text-align:center;font-size:13px;color:#6B7280;'>{d}</div>",
+            unsafe_allow_html=True
+        )
 
     cal = calendar.monthcalendar(year, month)
 
-    st.markdown("<div class='calendar'>", unsafe_allow_html=True)
-
     for week in cal:
-        for day in week:
+        cols = st.columns(7)
+
+        for i, day in enumerate(week):
+
             if day == 0:
-                st.markdown("<div></div>", unsafe_allow_html=True)
+                cols[i].markdown("<div style='height:95px;'></div>", unsafe_allow_html=True)
             else:
+                hujan = predictions[day-1]
+                tanggal_prediksi = datetime(year, month, day)
+                hst = (tanggal_prediksi.date() - tanggal_tanam).days
 
-                # HST
-                current_date = datetime(year, month, day).date()
-                hst = (current_date - tanggal_tanam).days
+                aktivitas = rbs_singkong_final(hujan, hst)
+                label = label_singkat(aktivitas)
+                warna = label_color.get(label, "#374151")
 
-                # Tentukan label
-                if hst < 0:
-                    label = ""
-                    label_class = ""
-                elif hst < 5:
-                    label = "Pemantauan"
-                    label_class = "pemantauan"
-                elif hst < 90:
-                    label = "Pemupukan"
-                    label_class = "pemupukan"
-                else:
-                    label = "Panen"
-                    label_class = "panen"
+                # Card HTML
+                cols[i].markdown(
+                    f"""
+                    <div class="calendar-card">
+                        <div class="calendar-date">{day}</div>
+                        <div class="calendar-label" style="color:{warna};">
+                            {label}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-                # Selected state
-                selected_class = ""
-                if st.session_state.selected_day == day:
-                    selected_class = "selected"
+                # Invisible button overlay (clickable)
+                if cols[i].button(" ", key=f"day_{day}", use_container_width=True):
+                    st.session_state.selected_day = day
 
-                st.markdown(f"""
-                <div class="day-card {selected_class}"
-                     onclick="window.location.href='?day={day}'">
-                    <div class="day-number">{day}</div>
-                    {f"<div class='label {label_class}'>{label}</div>" if label else ""}
-                </div>
-                """, unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# =========================
-# HANDLE CLICK
-# =========================
-query_params = st.query_params
-if "day" in query_params:
-    st.session_state.selected_day = int(query_params["day"])
-
-# =========================
+# =====================================================
 # DETAIL PANEL
-# =========================
-with col2:
+# =====================================================
+with right:
 
     selected_day = st.session_state.selected_day
-    selected_date = datetime(year, month, selected_day).date()
-    hst = (selected_date - tanggal_tanam).days
+    hujan = predictions[selected_day-1]
+    tanggal_selected = datetime(year, month, selected_day)
+    hst_selected = (tanggal_selected.date() - tanggal_tanam).days
+    aktivitas_full = rbs_singkong_final(hujan, hst_selected)
 
-    rain_pred = forecast_30[selected_day-1]
+    st.subheader("Detail Rekomendasi")
 
-    st.markdown("### Detail Rekomendasi")
-    st.write(f"📅 {selected_date}")
-    st.write(f"🌱 HST: {hst} hari")
-    st.write(f"☔ Prediksi Hujan: **{rain_pred:.2f} mm**")
+    st.write(f"📅 {selected_day} {calendar.month_name[month]} {year}")
+    st.write(f"🌱 HST: {hst_selected} hari")
+    st.metric("🌧 Prediksi Hujan", f"{hujan:.2f} mm")
 
-    if hst < 5:
-        st.info("Pemantauan awal – kelembapan cukup untuk pertumbuhan awal.")
-    elif hst < 90:
-        st.success("Fase pemupukan – kondisi mendukung.")
-    else:
-        st.warning("Mendekati panen – perhatikan kondisi lahan.")
+    st.info(aktivitas_full)
 
-    st.markdown("---")
-    st.line_chart(forecast_30)
+    st.divider()
+
+    st.subheader("Grafik Prediksi Hujan")
+
+    df_chart = pd.DataFrame({
+        "Hari": list(range(1, days_in_month+1)),
+        "Curah Hujan (mm)": predictions
+    })
+
+    st.line_chart(df_chart.set_index("Hari"))
