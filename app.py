@@ -48,75 +48,78 @@ if "selected_day" not in st.session_state:
     st.session_state.selected_day = 1
 
 # =========================
-# CSS
+# HANDLE CLICK (BEFORE UI)
+# =========================
+query_params = st.query_params
+if "day" in query_params:
+    st.session_state.selected_day = int(query_params["day"])
+
+# =========================
+# CSS (GRID FIXED)
 # =========================
 st.markdown("""
 <style>
 
-/* Kalender Grid */
-.calendar {
+.calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 8px;
+    margin-top: 20px;
 }
 
-/* Day Card */
+.day-header {
+    text-align: center;
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 13px;
+}
+
 .day-card {
     border-radius: 12px;
     border: 1px solid #e5e7eb;
-    padding: 10px 6px;
-    min-height: 70px;
+    padding: 8px;
+    min-height: 75px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.2s ease;
 }
 
 .day-card:hover {
     background-color: #f3f4f6;
 }
 
-/* Day Number */
 .day-number {
     font-weight: 600;
     font-size: 14px;
     color: #1f2937;
 }
 
-/* Label */
 .label {
     font-size: 11px;
-    margin-top: 4px;
+    margin-top: 6px;
     font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+    display: inline-block;
 }
 
-/* Highlight warna hanya pada label */
-.label.pemupukan {
+.pemupukan {
     background-color: #ede9fe;
     color: #6d28d9;
-    padding: 2px 6px;
-    border-radius: 6px;
-    display: inline-block;
 }
 
-.label.pemantauan {
+.pemantauan {
     background-color: #e0f2fe;
     color: #0369a1;
-    padding: 2px 6px;
-    border-radius: 6px;
-    display: inline-block;
 }
 
-.label.panen {
+.panen {
     background-color: #dcfce7;
     color: #166534;
-    padding: 2px 6px;
-    border-radius: 6px;
-    display: inline-block;
 }
 
-/* Selected Day */
 .selected {
     border: 2px solid #2563eb;
     background-color: #eff6ff;
@@ -128,7 +131,7 @@ st.markdown("""
 # =========================
 # MAIN LAYOUT
 # =========================
-col1, col2 = st.columns([3,1])
+col1, col2 = st.columns([3, 1])
 
 with col1:
 
@@ -136,23 +139,30 @@ with col1:
     year = today.year
     month = today.month
 
-    st.markdown(f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>", unsafe_allow_html=True)
+    st.markdown(
+        f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>",
+        unsafe_allow_html=True
+    )
+
+    # HEADER HARI
+    days_name = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+
+    st.markdown("<div class='calendar-grid'>", unsafe_allow_html=True)
+
+    for d in days_name:
+        st.markdown(f"<div class='day-header'>{d}</div>", unsafe_allow_html=True)
 
     cal = calendar.monthcalendar(year, month)
 
-    st.markdown("<div class='calendar'>", unsafe_allow_html=True)
-
     for week in cal:
         for day in week:
+
             if day == 0:
                 st.markdown("<div></div>", unsafe_allow_html=True)
             else:
-
-                # HST
                 current_date = datetime(year, month, day).date()
                 hst = (current_date - tanggal_tanam).days
 
-                # Tentukan label
                 if hst < 0:
                     label = ""
                     label_class = ""
@@ -166,7 +176,6 @@ with col1:
                     label = "Panen"
                     label_class = "panen"
 
-                # Selected state
                 selected_class = ""
                 if st.session_state.selected_day == day:
                     selected_class = "selected"
@@ -182,13 +191,6 @@ with col1:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # =========================
-# HANDLE CLICK
-# =========================
-query_params = st.query_params
-if "day" in query_params:
-    st.session_state.selected_day = int(query_params["day"])
-
-# =========================
 # DETAIL PANEL
 # =========================
 with col2:
@@ -197,7 +199,7 @@ with col2:
     selected_date = datetime(year, month, selected_day).date()
     hst = (selected_date - tanggal_tanam).days
 
-    rain_pred = forecast_30[selected_day-1]
+    rain_pred = forecast_30[selected_day - 1]
 
     st.markdown("### Detail Rekomendasi")
     st.write(f"📅 {selected_date}")
