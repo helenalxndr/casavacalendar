@@ -26,6 +26,22 @@ def init():
 model, encoder, scaler, data = init()
 
 # =========================================================
+# VALIDASI DATA
+# =========================================================
+if "tanggal" not in data.columns:
+    st.error("Kolom 'tanggal' tidak ditemukan pada dataset.")
+    st.write("Kolom tersedia:", data.columns.tolist())
+    st.stop()
+
+if "kecamatan" not in data.columns:
+    st.error("Kolom 'kecamatan' tidak ditemukan pada dataset.")
+    st.stop()
+
+if "rain_mm" not in data.columns:
+    st.error("Kolom 'rain_mm' tidak ditemukan pada dataset.")
+    st.stop()
+
+# =========================================================
 # SIDEBAR
 # =========================================================
 st.sidebar.title("⚙ Pengaturan")
@@ -41,8 +57,11 @@ kec_id = encoder.transform([kecamatan])[0]
 # =========================================================
 # DATA PREPARATION
 # =========================================================
-data["tanggal"] = pd.to_datetime(data["tanggal"])
 df_kec = data[data["kecamatan"] == kecamatan].sort_values("tanggal")
+
+if len(df_kec) < 270:
+    st.error("Data historis kurang dari 270 hari. Tidak bisa melakukan prediksi.")
+    st.stop()
 
 rain_last270 = df_kec["rain_mm"].values[-270:]
 forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
@@ -90,7 +109,7 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =========================================================
-# COLOR MAP (Soft & Professional)
+# COLOR MAP SOFT PROFESSIONAL
 # =========================================================
 color_map = {
     "Penanaman": "#2E7D32",
@@ -102,24 +121,20 @@ color_map = {
 }
 
 # =========================================================
-# CLEAN CALENDAR CSS
+# CLEAN CSS
 # =========================================================
 st.markdown("""
 <style>
-
-/* Rapikan jarak antar kolom */
 div[data-testid="column"] {
     padding-left:2px !important;
     padding-right:2px !important;
 }
 
-/* Rapikan jarak antar baris */
 div[data-testid="stHorizontalBlock"] {
     gap:4px !important;
     margin-bottom:4px !important;
 }
 
-/* Button kalender */
 div.stButton > button {
     height:80px;
     border-radius:10px;
@@ -134,17 +149,10 @@ div.stButton > button {
     transition:all 0.15s ease;
 }
 
-/* Hover effect */
 div.stButton > button:hover {
     transform:translateY(-1px);
     box-shadow:0 4px 10px rgba(0,0,0,0.15);
 }
-
-/* Highlight selected day */
-button[kind="secondary"]:focus {
-    outline:2px solid #1E88E5 !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -180,7 +188,6 @@ with left:
                 label = label_singkat(aktivitas_full)
 
                 label_color = color_map.get(label, "#455A64")
-
                 button_label = f"{day}\n{label}"
 
                 clicked = cols[i].button(
@@ -192,7 +199,7 @@ with left:
                 if clicked:
                     st.session_state.selected_day = day
 
-                # Warna label aktivitas
+                # Styling warna label
                 st.markdown(f"""
                 <style>
                 button[key="day_{day}"] span {{
@@ -232,3 +239,4 @@ with right:
     })
 
     st.line_chart(df_chart.set_index("Hari"))
+    
