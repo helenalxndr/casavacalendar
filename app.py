@@ -6,18 +6,22 @@ from datetime import datetime
 from utils.loader import load_all
 from utils.forecast import recursive_forecast
 
-st.set_page_config(layout="wide", page_title="Kalender Tanam Pintar")
+st.set_page_config(layout="wide")
 
 # =========================
-# LOAD DATA
+# LOAD DATA & LOGIC
 # =========================
 model, encoder, scaler, data = load_all()
 data["tanggal"] = pd.to_datetime(data["tanggal"])
 
 # =========================
-# SESSION STATE
+# SESSION STATE & HANDLE CLICK
 # =========================
-# Inisialisasi state hari yang dipilih agar tidak error
+# Kita baca query params di paling atas agar state langsung terupdate sebelum layout digambar
+query_params = st.query_params
+if "day" in query_params:
+    st.session_state.selected_day = int(query_params["day"])
+
 if "selected_day" not in st.session_state:
     st.session_state.selected_day = datetime.today().day
 
@@ -25,80 +29,40 @@ if "selected_day" not in st.session_state:
 # SIDEBAR
 # =========================
 st.sidebar.title("⚙ Pengaturan")
-
 kecamatan_list = sorted(data["kecamatan"].unique())
 selected_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kecamatan_list)
-
-tanggal_tanam = st.sidebar.date_input("Tanggal Tanam", value=datetime.today())
+tanggal_tanam = st.sidebar.date_input("Tanggal Tanam")
 
 # =========================
-# FILTER DATA & FORECAST
+# FORECAST
 # =========================
 kec_id = encoder.transform([selected_kecamatan])[0]
 df_kec = data[data["kecamatan"] == selected_kecamatan].copy().sort_values("tanggal")
 rain_last270 = df_kec["rain_mm"].values[-270:]
 
-# Prediksi 30 hari ke depan
 forecast_30 = recursive_forecast(
-    model=model,
-    scaler=scaler,
-    rain_last270=rain_last270,
-    kec_id=kec_id,
-    days=30
+    model=model, scaler=scaler, rain_last270=rain_last270, 
+    kec_id=kec_id, days=30
 )
 
 # =========================
-# CSS UNTUK CUSTOM BUTTON (KALENDER)
+# CSS (Tetap menggunakan class label berwarna)
 # =========================
 st.markdown("""
 <style>
-/* Membuat tombol native Streamlit berbentuk kotak seperti Day Card */
-div.stButton > button {
-    height: 100px;
-    width: 100%;
-    border-radius: 12px;
-    border: 1px solid #e5e7eb;
-    background-color: white;
-    color: #1f2937;
-    transition: all 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    padding: 10px;
-    text-align: left;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+.calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; width: 100%; }
+.day-card {
+    border-radius: 12px; border: 1px solid #e5e7eb; padding: 10px;
+    min-height: 80px; display: flex; flex-direction: column;
+    cursor: pointer; transition: 0.2s; background: white;
 }
-
-/* Hover effect */
-div.stButton > button:hover {
-    border-color: #2563eb;
-    background-color: #f9fafb;
-    transform: translateY(-2px);
-}
-
-/* Style saat tombol aktif/terpilih */
-div.stButton > button:focus, div.stButton > button:active {
-    border: 2px solid #2563eb !important;
-    background-color: #eff6ff !important;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-}
-
-/* Styling teks di dalam tombol */
-.btn-date {
-    font-size: 16px;
-    font-weight: bold;
-}
-.btn-label {
-    font-size: 11px;
-    margin-top: 4px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
-}
-.lbl-pemantauan { background-color: #e0f2fe; color: #0369a1; }
-.lbl-pemupukan { background-color: #ede9fe; color: #6d28d9; }
-.lbl-panen { background-color: #dcfce7; color: #166534; }
+.day-card:hover { background-color: #f3f4f6; border-color: #2563eb; }
+.day-number { font-weight: 600; font-size: 14px; color: #1f2937; }
+.label { font-size: 11px; margin-top: 6px; font-weight: 600; padding: 2px 6px; border-radius: 6px; display: inline-block; width: fit-content; }
+.pemupukan { background-color: #ede9fe; color: #6d28d9; }
+.pemantauan { background-color: #e0f2fe; color: #0369a1; }
+.panen { background-color: #dcfce7; color: #166534; }
+.selected { border: 2px solid #2563eb; background-color: #eff6ff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -112,57 +76,47 @@ with col1:
     year = today.year
     month = today.month
 
-    st.markdown(f"<h2 style='text-align:center; margin-bottom:20px;'>{calendar.month_name[month]} {year}</h2>", unsafe_allow_html=True)
-
-    # Header Nama Hari (7 Kolom)
-    cols_header = st.columns(7)
-    nama_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
-    for i, nh in enumerate(nama_hari):
-        cols_header[i].markdown(f"<p style='text-align:center; font-weight:bold; color:#6b7280;'>{nh}</p>", unsafe_allow_html=True)
-
-    # Ambil struktur minggu dari calendar
+    st.markdown(f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>", unsafe_allow_html=True)
     cal = calendar.monthcalendar(year, month)
 
+    # Buat header hari
+    nama_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+    header_html = "".join([f"<div style='text-align:center; font-weight:bold; color:#6b7280; font-size:12px;'>{h}</div>" for h in nama_hari])
+
+    # Buat isi tanggal
+    body_html = ""
     for week in cal:
-        cols = st.columns(7)
-        for i, day in enumerate(week):
+        for day in week:
             if day == 0:
-                cols[i].write("") # Kotak kosong di luar bulan
+                body_html += "<div></div>"
             else:
-                # Logika HST & Label
                 current_date = datetime(year, month, day).date()
                 hst = (current_date - tanggal_tanam).days
                 
-                label_html = ""
-                label_class = ""
-                
-                if hst >= 0:
-                    if hst < 5:
-                        label_html = "🌱 Pantau"
-                        label_class = "lbl-pemantauan"
-                    elif hst < 90:
-                        label_html = "💊 Pupuk"
-                        label_class = "lbl-pemupukan"
-                    else:
-                        label_html = "🌾 Panen"
-                        label_class = "lbl-panen"
+                # Logika Label Warna
+                if hst < 0: label, clss = "", ""
+                elif hst < 5: label, clss = "Pemantauan", "pemantauan"
+                elif hst < 90: label, clss = "Pemupukan", "pemupukan"
+                else: label, clss = "Panen", "panen"
 
-                # Render tombol sebagai kotak kalender
-                # Menggunakan st.markdown di dalam tombol tidak bisa, maka kita pakai teks biasa
-                # Tapi kita beri gaya melalui CSS global di atas
-                button_content = f"{day}\n{label_html}"
+                selected_class = "selected" if st.session_state.selected_day == day else ""
                 
-                if cols[i].button(button_content, key=f"day_btn_{day}", use_container_width=True):
-                    st.session_state.selected_day = day
-                    st.rerun()
+                # HTML Day Card dengan onclick URL
+                body_html += f"""
+                <div class="day-card {selected_class}" onclick="window.location.href='?day={day}'">
+                    <div class="day-number">{day}</div>
+                    {f'<div class="label {clss}">{label}</div>' if label else ''}
+                </div>
+                """
+
+    full_calendar_html = f"<div class='calendar'>{header_html}{body_html}</div>"
+    st.markdown(full_calendar_html, unsafe_allow_html=True)
 
 # =========================
-# DETAIL PANEL (KOLOM KANAN)
+# DETAIL PANEL
 # =========================
 with col2:
     selected_day = st.session_state.selected_day
-    
-    # Proteksi error tanggal
     try:
         selected_date = datetime(year, month, selected_day).date()
     except:
@@ -170,29 +124,20 @@ with col2:
         selected_date = datetime(year, month, selected_day).date()
 
     hst = (selected_date - tanggal_tanam).days
-    
-    # Ambil index prediksi (asumsi forecast_30 adalah list/array 30 hari)
     idx = min(max(0, selected_day - 1), len(forecast_30) - 1)
     rain_pred = forecast_30[idx]
 
-    st.markdown("### 📋 Detail Rekomendasi")
-    st.markdown(f"""
-    **Tanggal:** {selected_date.strftime('%d %B %Y')}  
-    **Usia Tanaman:** {hst} Hari Setelah Tanam (HST)  
-    **Prediksi Curah Hujan:** `{rain_pred:.2f} mm`
-    """)
+    st.markdown("### Detail Rekomendasi")
+    st.write(f"📅 **{selected_date.strftime('%d %b %Y')}**")
+    st.write(f"🌱 **HST:** {hst} hari")
+    st.write(f"☔ **Prediksi Hujan:** {rain_pred:.2f} mm")
 
-    if hst < 0:
-        st.info("Belum memasuki masa tanam.")
-    elif hst < 5:
-        st.info("💡 **Fase Pemantauan**: Pastikan kelembapan tanah terjaga untuk tunas baru.")
+    if hst < 5:
+        st.info("Pemantauan awal – kelembapan cukup untuk pertumbuhan awal.")
     elif hst < 90:
-        st.success("✅ **Fase Pemupukan**: Kondisi vegetatif aktif. Lakukan pemupukan sesuai dosis.")
+        st.success("Fase pemupukan – kondisi mendukung.")
     else:
-        st.warning("⚠️ **Fase Panen**: Perhatikan cuaca saat melakukan pemanenan agar kualitas terjaga.")
+        st.warning("Mendekati panen – perhatikan kondisi lahan.")
 
     st.markdown("---")
-    st.markdown("**Tren Curah Hujan (30 Hari)**")
-    # Menampilkan chart tren hujan
-    chart_data = pd.DataFrame(forecast_30, columns=["Hujan (mm)"])
-    st.line_chart(chart_data)
+    st.line_chart(forecast_30)
