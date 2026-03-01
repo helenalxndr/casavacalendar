@@ -24,7 +24,6 @@ def init():
 
 model, encoder, scaler, data = init()
 
-# Rename kolom agar aman
 if "index" in data.columns:
     data["tanggal"] = pd.to_datetime(data["index"])
 
@@ -54,7 +53,7 @@ rain_last270 = df_kec["rain_mm"].values[-270:]
 forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
 
 # =====================================================
-# STATE BULAN
+# STATE
 # =====================================================
 if "month" not in st.session_state:
     st.session_state.month = datetime.today().month
@@ -100,7 +99,7 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =====================================================
-# CSS (TIDAK DIUBAH)
+# CSS
 # =====================================================
 st.markdown("""
 <style>
@@ -135,11 +134,20 @@ div.stButton > button:hover {
     transform:scale(1.02);
 }
 
+/* LABEL (BARIS KEDUA) */
+div.stButton > button span {
+    line-height:1.4;
+}
+
+div.stButton > button span:last-child {
+    font-weight:600;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# COLOR MAP UNTUK LABEL SAJA
+# COLOR MAP UNTUK LABEL
 # =====================================================
 label_color = {
     "Penanaman": "#059669",
@@ -168,7 +176,6 @@ with left:
         )
 
     cal = calendar.monthcalendar(year, month)
-    today = datetime.today()
 
     for week in cal:
         cols = st.columns(7)
@@ -185,13 +192,20 @@ with left:
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
 
-                warna_label = label_color.get(label, "#374151")
-
-                # HANYA LABEL YANG BERWARNA
-                text = f"{day}\n:{{color:{warna_label}}}[{label}]"
+                text = f"{day}\n{label}"
 
                 if cols[i].button(text, key=f"day_{day}", use_container_width=True):
                     st.session_state.selected_day = day
+
+                # Inject warna spesifik untuk label tombol ini
+                warna = label_color.get(label, "#374151")
+                st.markdown(f"""
+                <style>
+                button[key="day_{day}"] span:last-child {{
+                    color:{warna} !important;
+                }}
+                </style>
+                """, unsafe_allow_html=True)
 
 # =====================================================
 # DETAIL PANEL
