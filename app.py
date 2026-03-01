@@ -24,6 +24,7 @@ def init():
 
 model, encoder, scaler, data = init()
 
+# Rename kolom aman
 if "index" in data.columns:
     data["tanggal"] = pd.to_datetime(data["index"])
 
@@ -53,7 +54,7 @@ rain_last270 = df_kec["rain_mm"].values[-270:]
 forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
 
 # =====================================================
-# STATE
+# STATE BULAN
 # =====================================================
 if "month" not in st.session_state:
     st.session_state.month = datetime.today().month
@@ -65,7 +66,7 @@ if "selected_day" not in st.session_state:
     st.session_state.selected_day = datetime.today().day
 
 # =====================================================
-# NAVIGASI BULAN
+# NAVIGASI
 # =====================================================
 col1, col2, col3 = st.columns([1,6,1])
 
@@ -99,7 +100,7 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =====================================================
-# CSS
+# CSS (SAMA SEPERTI DASHBOARD LAMA)
 # =====================================================
 st.markdown("""
 <style>
@@ -117,37 +118,26 @@ div[data-testid="stHorizontalBlock"] {
 }
 
 div.stButton > button {
-    height:95px;
-    border-radius:12px;
+    height:70px;
+    border-radius:10px;
     border:1px solid #E5E7EB;
     background:#FFFFFF;
-    text-align:left;
-    padding:10px;
-    font-size:13px;
-    font-weight:500;
-    white-space:pre-line;
+    text-align:center;
+    padding:6px;
+    font-size:14px;
+    font-weight:600;
     transition:all 0.2s ease;
 }
 
 div.stButton > button:hover {
     background:#F1F5F9;
-    transform:scale(1.02);
-}
-
-/* LABEL (BARIS KEDUA) */
-div.stButton > button span {
-    line-height:1.4;
-}
-
-div.stButton > button span:last-child {
-    font-weight:600;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# COLOR MAP UNTUK LABEL
+# WARNA LABEL
 # =====================================================
 label_color = {
     "Penanaman": "#059669",
@@ -183,7 +173,7 @@ with left:
         for i, day in enumerate(week):
 
             if day == 0:
-                cols[i].markdown("<div style='height:95px;'></div>", unsafe_allow_html=True)
+                cols[i].markdown("<div style='height:70px;'></div>", unsafe_allow_html=True)
             else:
                 hujan = predictions[day-1]
                 tanggal_prediksi = datetime(year, month, day)
@@ -191,21 +181,17 @@ with left:
 
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
+                warna = label_color.get(label, "#374151")
 
-                text = f"{day}\n{label}"
-
-                if cols[i].button(text, key=f"day_{day}", use_container_width=True):
+                if cols[i].button(str(day), key=f"day_{day}", use_container_width=True):
                     st.session_state.selected_day = day
 
-                # Inject warna spesifik untuk label tombol ini
-                warna = label_color.get(label, "#374151")
-                st.markdown(f"""
-                <style>
-                button[key="day_{day}"] span:last-child {{
-                    color:{warna} !important;
-                }}
-                </style>
-                """, unsafe_allow_html=True)
+                # LABEL BERWARNA (di bawah tanggal, tetap dalam sel)
+                cols[i].markdown(
+                    f"<div style='text-align:center;font-size:12px;font-weight:600;color:{warna};'>"
+                    f"{label}</div>",
+                    unsafe_allow_html=True
+                )
 
 # =====================================================
 # DETAIL PANEL
