@@ -10,13 +10,10 @@ from utils.rbs import rbs_singkong_final, label_singkat
 # =====================================================
 # PAGE CONFIG
 # =====================================================
-st.set_page_config(
-    page_title="Kalender Tanam Singkong",
-    layout="wide"
-)
+st.set_page_config(page_title="Kalender Tanam Singkong", layout="wide")
 
 # =====================================================
-# LOAD DATA
+# LOAD
 # =====================================================
 @st.cache_resource
 def init():
@@ -24,7 +21,6 @@ def init():
 
 model, encoder, scaler, data = init()
 
-# Aman rename kolom
 if "index" in data.columns:
     data["tanggal"] = pd.to_datetime(data["index"])
 
@@ -35,15 +31,10 @@ if "curah_hujan_mm" in data.columns:
 # SIDEBAR
 # =====================================================
 st.sidebar.title("⚙ Pengaturan")
-
 kecamatan = st.sidebar.selectbox("Pilih Kecamatan", encoder.classes_)
 tanggal_tanam = st.sidebar.date_input("Tanggal Tanam", value=datetime.today())
-
 kec_id = encoder.transform([kecamatan])[0]
 
-# =====================================================
-# FILTER DATA
-# =====================================================
 df_kec = data[data["kecamatan"] == kecamatan].sort_values("tanggal")
 
 if len(df_kec) < 270:
@@ -54,129 +45,110 @@ rain_last270 = df_kec["rain_mm"].values[-270:]
 forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
 
 # =====================================================
-# STATE BULAN
+# STATE
 # =====================================================
 if "month" not in st.session_state:
     st.session_state.month = datetime.today().month
-
 if "year" not in st.session_state:
     st.session_state.year = datetime.today().year
-
 if "selected_day" not in st.session_state:
     st.session_state.selected_day = datetime.today().day
 
-# =====================================================
-# NAVIGASI
-# =====================================================
-col1, col2, col3 = st.columns([1,6,1])
-
-with col1:
-    if st.button("◀"):
-        if st.session_state.month == 1:
-            st.session_state.month = 12
-            st.session_state.year -= 1
-        else:
-            st.session_state.month -= 1
-
-with col3:
-    if st.button("▶"):
-        if st.session_state.month == 12:
-            st.session_state.month = 1
-            st.session_state.year += 1
-        else:
-            st.session_state.month += 1
-
 month = st.session_state.month
 year = st.session_state.year
-
-with col2:
-    st.markdown(
-        f"<h2 style='text-align:center;color:#1F2937;'>"
-        f"{calendar.month_name[month]} {year}</h2>",
-        unsafe_allow_html=True
-    )
 
 days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =====================================================
-# CSS AESTHETIC
+# COLOR PALETTE (BLOCK STYLE)
+# =====================================================
+label_block_color = {
+    "Penanaman": "#DCFCE7",
+    "Pemupukan": "#EDE9FE",
+    "Penyiraman": "#DBEAFE",
+    "Pembersihan Gulma": "#FEF3C7",
+    "Pemanenan": "#FEE2E2",
+    "Pemantauan": "#F3F4F6"
+}
+
+label_text_color = {
+    "Penanaman": "#15803D",
+    "Pemupukan": "#6D28D9",
+    "Penyiraman": "#1D4ED8",
+    "Pembersihan Gulma": "#B45309",
+    "Pemanenan": "#B91C1C",
+    "Pemantauan": "#374151"
+}
+
+# =====================================================
+# CSS
 # =====================================================
 st.markdown("""
 <style>
-
-.main {
-    background-color:#F8FAFC;
+.calendar-grid {
+    display:grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap:6px;
 }
 
-div[data-testid="column"] {
-    padding:2px !important;
-}
-
-div[data-testid="stHorizontalBlock"] {
-    gap:6px !important;
-}
-
-div.stButton > button {
-    height:95px;
-    border-radius:12px;
+.day-box {
+    background:white;
     border:1px solid #E5E7EB;
-    background:#FFFFFF;
-    text-align:left;
-    padding:10px;
-    font-size:13px;
-    font-weight:500;
-    white-space:pre-line;
-    transition:all 0.2s ease;
+    border-radius:12px;
+    height:100px;
+    padding:8px;
+    cursor:pointer;
+    transition:0.2s;
 }
 
-div.stButton > button:hover {
-    background:#F1F5F9;
-    transform:scale(1.02);
+.day-box:hover {
+    background:#F9FAFB;
 }
 
+.day-number {
+    font-weight:600;
+    font-size:14px;
+}
+
+.label-pill {
+    margin-top:6px;
+    padding:4px 6px;
+    border-radius:6px;
+    font-size:11px;
+    display:inline-block;
+}
+.selected {
+    border:2px solid #059669 !important;
+}
+.today {
+    border:2px solid #10B981 !important;
+}
 </style>
 """, unsafe_allow_html=True)
-
-# =====================================================
-# COLOR MAP
-# =====================================================
-label_color = {
-    "Penanaman": "🌱",
-    "Pemupukan": "🧪",
-    "Penyiraman": "💧",
-    "Pembersihan Gulma": "🌾",
-    "Pemanenan": "🌽",
-    "Pemantauan": "🔍"
-}
 
 # =====================================================
 # LAYOUT
 # =====================================================
 left, right = st.columns([2.5,1])
 
-# =====================================================
-# KALENDER
-# =====================================================
 with left:
 
-    header = st.columns(7)
-    for i, d in enumerate(["Sen","Sel","Rab","Kam","Jum","Sab","Min"]):
-        header[i].markdown(
-            f"<div style='text-align:center;font-size:13px;color:#6B7280;'>{d}</div>",
-            unsafe_allow_html=True
-        )
+    st.markdown(
+        f"<h2 style='text-align:center;color:#1F2937;'>"
+        f"{calendar.month_name[month]} {year}</h2>",
+        unsafe_allow_html=True
+    )
 
     cal = calendar.monthcalendar(year, month)
     today = datetime.today()
 
+    st.markdown("<div class='calendar-grid'>", unsafe_allow_html=True)
+
     for week in cal:
-        cols = st.columns(7)
-
-        for i, day in enumerate(week):
-
+        for day in week:
             if day == 0:
-                cols[i].markdown("<div style='height:95px;'></div>", unsafe_allow_html=True)
+                st.markdown("<div></div>", unsafe_allow_html=True)
             else:
                 hujan = predictions[day-1]
                 tanggal_prediksi = datetime(year, month, day)
@@ -185,30 +157,41 @@ with left:
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
 
-                emoji = label_color.get(label, "•")
+                block_color = label_block_color.get(label, "#F3F4F6")
+                text_color = label_text_color.get(label, "#374151")
 
-                is_today = (
+                selected_class = ""
+                if day == st.session_state.selected_day:
+                    selected_class = "selected"
+                if (
                     day == today.day and
                     month == today.month and
                     year == today.year
-                )
+                ):
+                    selected_class += " today"
 
-                is_selected = day == st.session_state.selected_day
+                box_html = f"""
+                <div class="day-box {selected_class}"
+                     onclick="window.location.href='?day={day}'">
+                    <div class="day-number">{day}</div>
+                    <div class="label-pill"
+                         style="background:{block_color};color:{text_color};">
+                        {label}
+                    </div>
+                </div>
+                """
 
-                text = f"{day} {emoji}\n{label}"
+                st.markdown(box_html, unsafe_allow_html=True)
 
-                if cols[i].button(text, key=f"day_{day}", use_container_width=True):
-                    st.session_state.selected_day = day
+    st.markdown("</div>", unsafe_allow_html=True)
 
-                # highlight visual fix
-                if is_today:
-                    cols[i].markdown(
-                        "<style>button[kind='secondary'] {background:#ECFDF5 !important;}</style>",
-                        unsafe_allow_html=True
-                    )
+# Handle click via query param
+query = st.query_params
+if "day" in query:
+    st.session_state.selected_day = int(query["day"])
 
 # =====================================================
-# DETAIL PANEL
+# DETAIL
 # =====================================================
 with right:
 
@@ -219,15 +202,12 @@ with right:
     aktivitas_full = rbs_singkong_final(hujan, hst_selected)
 
     st.subheader("Detail Rekomendasi")
-
     st.write(f"📅 {selected_day} {calendar.month_name[month]} {year}")
     st.write(f"🌱 HST: {hst_selected} hari")
     st.metric("🌧 Prediksi Hujan", f"{hujan:.2f} mm")
-
     st.info(aktivitas_full)
 
     st.divider()
-
     st.subheader("Grafik Prediksi Hujan")
 
     df_chart = pd.DataFrame({
