@@ -12,7 +12,6 @@ st.set_page_config(layout="wide")
 # LOAD DATA
 # =========================
 model, encoder, scaler, data = load_all()
-data["index"] = pd.to_datetime(data["index"])
 
 # =========================
 # SIDEBAR
