@@ -24,7 +24,7 @@ def init():
 
 model, encoder, scaler, data = init()
 
-# Rename kolom agar aman
+# Aman rename kolom
 if "index" in data.columns:
     data["tanggal"] = pd.to_datetime(data["index"])
 
@@ -54,7 +54,7 @@ rain_last270 = df_kec["rain_mm"].values[-270:]
 forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
 
 # =====================================================
-# MONTH STATE
+# STATE BULAN
 # =====================================================
 if "month" not in st.session_state:
     st.session_state.month = datetime.today().month
@@ -66,7 +66,7 @@ if "selected_day" not in st.session_state:
     st.session_state.selected_day = datetime.today().day
 
 # =====================================================
-# NAVIGATION HEADER
+# NAVIGASI
 # =====================================================
 col1, col2, col3 = st.columns([1,6,1])
 
@@ -91,7 +91,7 @@ year = st.session_state.year
 
 with col2:
     st.markdown(
-        f"<h2 style='text-align:center;'>"
+        f"<h2 style='text-align:center;color:#1F2937;'>"
         f"{calendar.month_name[month]} {year}</h2>",
         unsafe_allow_html=True
     )
@@ -100,7 +100,7 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =====================================================
-# AESTHETIC CSS
+# CSS AESTHETIC
 # =====================================================
 st.markdown("""
 <style>
@@ -110,41 +110,29 @@ st.markdown("""
 }
 
 div[data-testid="column"] {
-    padding:0 !important;
+    padding:2px !important;
 }
 
 div[data-testid="stHorizontalBlock"] {
-    gap:4px !important;
-    margin-bottom:4px !important;
+    gap:6px !important;
 }
 
 div.stButton > button {
     height:95px;
-    border-radius:10px;
+    border-radius:12px;
     border:1px solid #E5E7EB;
     background:#FFFFFF;
     text-align:left;
-    padding:8px;
-    font-size:12px;
+    padding:10px;
+    font-size:13px;
     font-weight:500;
     white-space:pre-line;
-    box-shadow:0 1px 2px rgba(0,0,0,0.03);
     transition:all 0.2s ease;
 }
 
 div.stButton > button:hover {
     background:#F1F5F9;
-    transform:scale(1.01);
-}
-
-button.today {
-    background:#ECFDF5 !important;
-    border:1px solid #10B981 !important;
-}
-
-button.selected {
-    border:2px solid #059669 !important;
-    background:#F0FDF4 !important;
+    transform:scale(1.02);
 }
 
 </style>
@@ -154,12 +142,12 @@ button.selected {
 # COLOR MAP
 # =====================================================
 label_color = {
-    "Penanaman": "#059669",
-    "Pemupukan": "#7C3AED",
-    "Penyiraman": "#0EA5E9",
-    "Pembersihan Gulma": "#F59E0B",
-    "Pemanenan": "#DC2626",
-    "Pemantauan": "#6B7280"
+    "Penanaman": "🌱",
+    "Pemupukan": "🧪",
+    "Penyiraman": "💧",
+    "Pembersihan Gulma": "🌾",
+    "Pemanenan": "🌽",
+    "Pemantauan": "🔍"
 }
 
 # =====================================================
@@ -168,7 +156,7 @@ label_color = {
 left, right = st.columns([2.5,1])
 
 # =====================================================
-# CALENDAR GRID
+# KALENDER
 # =====================================================
 with left:
 
@@ -188,10 +176,7 @@ with left:
         for i, day in enumerate(week):
 
             if day == 0:
-                cols[i].markdown(
-                    "<div style='height:95px;'></div>",
-                    unsafe_allow_html=True
-                )
+                cols[i].markdown("<div style='height:95px;'></div>", unsafe_allow_html=True)
             else:
                 hujan = predictions[day-1]
                 tanggal_prediksi = datetime(year, month, day)
@@ -200,10 +185,27 @@ with left:
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
 
-                text = f"{day}\n{label}"
+                emoji = label_color.get(label, "•")
+
+                is_today = (
+                    day == today.day and
+                    month == today.month and
+                    year == today.year
+                )
+
+                is_selected = day == st.session_state.selected_day
+
+                text = f"{day} {emoji}\n{label}"
 
                 if cols[i].button(text, key=f"day_{day}", use_container_width=True):
                     st.session_state.selected_day = day
+
+                # highlight visual fix
+                if is_today:
+                    cols[i].markdown(
+                        "<style>button[kind='secondary'] {background:#ECFDF5 !important;}</style>",
+                        unsafe_allow_html=True
+                    )
 
 # =====================================================
 # DETAIL PANEL
@@ -234,4 +236,3 @@ with right:
     })
 
     st.line_chart(df_chart.set_index("Hari"))
-    
