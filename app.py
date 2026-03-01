@@ -1,33 +1,97 @@
-# ==============================
-# CSS CLEAN PROFESSIONAL
-# ==============================
-st.markdown("""
-<style>
-div.stButton > button {
-    height:100px;
-    border-radius:16px;
-    font-weight:600;
-    font-size:15px;
-    border:none;
-    box-shadow:0 4px 10px rgba(0,0,0,0.15);
-    transition:0.2s;
-}
-div.stButton > button:hover {
-    transform:translateY(-3px);
-    box-shadow:0 8px 18px rgba(0,0,0,0.25);
-}
-</style>
-""", unsafe_allow_html=True)
+import streamlit as st
+import calendar
+from datetime import datetime
+import pandas as pd
+import numpy as np
 
-# ==============================
-# SESSION
-# ==============================
+from utils.loader import load_all
+from utils.forecast import recursive_forecast
+from utils.rbs import rbs_singkong_final, label_singkat
+
+# =========================================================
+# PAGE CONFIG
+# =========================================================
+st.set_page_config(
+    page_title="Dashboard Kalender Tanam Singkong",
+    layout="wide"
+)
+
+# =========================================================
+# LOAD MODEL & DATA
+# =========================================================
+@st.cache_resource
+def init():
+    return load_all()
+
+model, encoder, scaler, data = init()
+
+# =========================================================
+# SIDEBAR
+# =========================================================
+st.sidebar.title("⚙ Pengaturan")
+
+kecamatan = st.sidebar.selectbox("Pilih Kecamatan", encoder.classes_)
+tanggal_tanam = st.sidebar.date_input(
+    "Tanggal Tanam",
+    value=datetime.today()
+)
+
+kec_id = encoder.transform([kecamatan])[0]
+
+# =========================================================
+# DATA PREPARATION
+# =========================================================
+data["tanggal"] = pd.to_datetime(data["tanggal"])
+df_kec = data[data["kecamatan"] == kecamatan].sort_values("tanggal")
+
+rain_last270 = df_kec["rain_mm"].values[-270:]
+forecast = recursive_forecast(model, scaler, rain_last270, kec_id, days=31)
+
+# =========================================================
+# NAVIGASI BULAN
+# =========================================================
+if "month" not in st.session_state:
+    st.session_state.month = datetime.today().month
+
+if "year" not in st.session_state:
+    st.session_state.year = datetime.today().year
+
 if "selected_day" not in st.session_state:
     st.session_state.selected_day = 1
 
-# ==============================
+col_prev, col_title, col_next = st.columns([1,6,1])
+
+with col_prev:
+    if st.button("◀"):
+        if st.session_state.month == 1:
+            st.session_state.month = 12
+            st.session_state.year -= 1
+        else:
+            st.session_state.month -= 1
+
+with col_next:
+    if st.button("▶"):
+        if st.session_state.month == 12:
+            st.session_state.month = 1
+            st.session_state.year += 1
+        else:
+            st.session_state.month += 1
+
+month = st.session_state.month
+year = st.session_state.year
+
+with col_title:
+    st.markdown(
+        f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>",
+        unsafe_allow_html=True
+    )
+
+days_in_month = calendar.monthrange(year, month)[1]
+predictions = forecast[:days_in_month]
+
+# =========================================================
 # COLOR MAP PROFESSIONAL
-# ==============================
+# =========================================================
 color_map = {
     "Penanaman": "#2E7D32",
     "Pemupukan": "#EF6C00",
@@ -37,11 +101,36 @@ color_map = {
     "Pemantauan": "#455A64"
 }
 
-# ==============================
-# KALENDER GRID STABLE
-# ==============================
-left, right = st.columns([2.5,1])
+# =========================================================
+# CUSTOM CSS
+# =========================================================
+st.markdown("""
+<style>
+div.stButton > button {
+    height:95px;
+    border-radius:16px;
+    font-weight:600;
+    font-size:14px;
+    border:none;
+    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    transition:0.2s;
+    white-space:pre-line;
+}
+div.stButton > button:hover {
+    transform:translateY(-3px);
+    box-shadow:0 8px 18px rgba(0,0,0,0.25);
+}
+</style>
+""", unsafe_allow_html=True)
 
+# =========================================================
+# LAYOUT
+# =========================================================
+left, right = st.columns([2.3,1])
+
+# =========================================================
+# CALENDAR GRID
+# =========================================================
 with left:
 
     header = st.columns(7)
@@ -49,6 +138,7 @@ with left:
         header[i].markdown(f"<center><b>{d}</b></center>", unsafe_allow_html=True)
 
     cal = calendar.monthcalendar(year, month)
+    today = datetime.today()
 
     for week in cal:
         cols = st.columns(7)
@@ -69,47 +159,53 @@ with left:
 
                 button_label = f"{day}\n{label}"
 
-                if cols[i].button(
+                clicked = cols[i].button(
                     button_label,
                     key=f"day_{day}",
                     use_container_width=True
-                ):
+                )
+
+                if clicked:
                     st.session_state.selected_day = day
 
-                # inject color style per button
+                # Dynamic color styling
                 st.markdown(f"""
                 <style>
-                button[data-testid="baseButton-secondary"][key="day_{day}"] {{
+                button[key="day_{day}"] {{
                     background:{color} !important;
                     color:white !important;
                 }}
                 </style>
                 """, unsafe_allow_html=True)
 
-# ==============================
+# =========================================================
 # DETAIL PANEL
-# ==============================
+# =========================================================
 with right:
 
     selected_day = st.session_state.selected_day
+
     hujan = predictions[selected_day-1]
     tanggal_selected = datetime(year, month, selected_day)
     hst_selected = (tanggal_selected.date() - tanggal_tanam).days
+
     aktivitas_full = rbs_singkong_final(hujan, hst_selected)
 
-    st.subheader("Detail Rekomendasi")
-    st.write(f"📅 {selected_day} {calendar.month_name[month]} {year}")
-    st.write(f"🌱 HST: {hst_selected} hari")
+    st.subheader("📋 Detail Rekomendasi")
+
+    st.write(f"📅 Tanggal : {selected_day} {calendar.month_name[month]} {year}")
+    st.write(f"🌱 HST     : {hst_selected} hari")
     st.metric("🌧 Prediksi Hujan", f"{hujan:.2f} mm")
+
     st.info(aktivitas_full)
 
     st.divider()
 
-    st.subheader("Grafik Prediksi Hujan")
+    st.subheader("📈 Grafik Prediksi Hujan")
 
     df_chart = pd.DataFrame({
         "Hari": list(range(1, days_in_month+1)),
-        "Hujan": predictions
+        "Curah Hujan (mm)": predictions
     })
 
     st.line_chart(df_chart.set_index("Hari"))
