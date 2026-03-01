@@ -82,7 +82,7 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =========================================================
-# WARNA MODERN
+# WARNA AKTIVITAS
 # =========================================================
 color_map = {
     "Penanaman": "#43A047",
@@ -99,36 +99,9 @@ color_map = {
 left, right = st.columns([2.5,1])
 
 # =========================================================
-# KALENDER CLICKABLE
+# KALENDER (TAMPILAN CLEAN + CLICKABLE)
 # =========================================================
 with left:
-
-    # CSS
-    st.markdown("""
-    <style>
-    .calendar-btn button {
-        width:100%;
-        height:95px;
-        border-radius:16px;
-        border:none;
-        padding:12px;
-        text-align:center;
-        font-size:13px;
-        font-weight:500;
-        color:white;
-        transition:0.2s;
-    }
-    .calendar-btn button:hover {
-        transform:scale(1.04);
-        filter:brightness(1.1);
-    }
-    .day-number {
-        font-size:20px;
-        font-weight:bold;
-        margin-bottom:6px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 
     header = st.columns(7)
     for i, d in enumerate(["Sen","Sel","Rab","Kam","Jum","Sab","Min"]):
@@ -150,37 +123,36 @@ with left:
 
                 aktivitas_full = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas_full)
+
                 bg_color = color_map.get(label, "#546E7A")
 
-                border_style = ""
+                border = ""
                 if day == today.day and month == today.month and year == today.year:
-                    border_style = "border:3px solid black;"
+                    border = "border:3px solid black;"
 
                 if st.session_state.selected_day == day:
-                    border_style = "border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.4);"
+                    border = "border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.4);"
 
-                button_label = f"""
-                <div class='day-number'>{day}</div>
-                {label}
+                box_html = f"""
+                <div style="
+                    background:{bg_color};
+                    padding:10px;
+                    border-radius:14px;
+                    color:white;
+                    height:85px;
+                    text-align:center;
+                    {border}">
+                    <div style="font-size:20px;font-weight:bold;">{day}</div>
+                    <div style="font-size:13px;">{label}</div>
+                </div>
                 """
 
                 with cols[i]:
-                    st.markdown("<div class='calendar-btn'>", unsafe_allow_html=True)
-                    if st.button(button_label, key=f"day_{day}", help=aktivitas_full):
+                    # Invisible button trigger
+                    if st.button("", key=f"btn_{day}"):
                         st.session_state.selected_day = day
-                    st.markdown("</div>", unsafe_allow_html=True)
 
-                    st.markdown(
-                        f"""
-                        <style>
-                        div[data-testid="stButton"] button[key="day_{day}"] {{
-                            background:{bg_color};
-                            {border_style}
-                        }}
-                        </style>
-                        """,
-                        unsafe_allow_html=True
-                    )
+                    st.markdown(box_html, unsafe_allow_html=True)
 
 # =========================================================
 # PANEL DETAIL
