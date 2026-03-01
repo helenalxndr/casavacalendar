@@ -24,7 +24,7 @@ def init():
 
 model, encoder, scaler, data = init()
 
-# Rename kolom aman
+# Aman rename kolom
 if "index" in data.columns:
     data["tanggal"] = pd.to_datetime(data["index"])
 
@@ -100,7 +100,7 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =====================================================
-# CSS (SAMA SEPERTI DASHBOARD LAMA)
+# CSS AESTHETIC
 # =====================================================
 st.markdown("""
 <style>
@@ -118,34 +118,36 @@ div[data-testid="stHorizontalBlock"] {
 }
 
 div.stButton > button {
-    height:70px;
-    border-radius:10px;
+    height:95px;
+    border-radius:12px;
     border:1px solid #E5E7EB;
     background:#FFFFFF;
-    text-align:center;
-    padding:6px;
-    font-size:14px;
-    font-weight:600;
+    text-align:left;
+    padding:10px;
+    font-size:13px;
+    font-weight:500;
+    white-space:pre-line;
     transition:all 0.2s ease;
 }
 
 div.stButton > button:hover {
     background:#F1F5F9;
+    transform:scale(1.02);
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# WARNA LABEL
+# COLOR MAP
 # =====================================================
 label_color = {
-    "Penanaman": "#059669",
-    "Pemupukan": "#7C3AED",
-    "Penyiraman": "#0EA5E9",
-    "Pembersihan Gulma": "#F59E0B",
-    "Pemanenan": "#DC2626",
-    "Pemantauan": "#6B7280"
+    "Penanaman": "🌱",
+    "Pemupukan": "🧪",
+    "Penyiraman": "💧",
+    "Pembersihan Gulma": "🌾",
+    "Pemanenan": "🌽",
+    "Pemantauan": "🔍"
 }
 
 # =====================================================
@@ -166,6 +168,7 @@ with left:
         )
 
     cal = calendar.monthcalendar(year, month)
+    today = datetime.today()
 
     for week in cal:
         cols = st.columns(7)
@@ -173,7 +176,7 @@ with left:
         for i, day in enumerate(week):
 
             if day == 0:
-                cols[i].markdown("<div style='height:70px;'></div>", unsafe_allow_html=True)
+                cols[i].markdown("<div style='height:95px;'></div>", unsafe_allow_html=True)
             else:
                 hujan = predictions[day-1]
                 tanggal_prediksi = datetime(year, month, day)
@@ -181,17 +184,28 @@ with left:
 
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
-                warna = label_color.get(label, "#374151")
 
-                if cols[i].button(str(day), key=f"day_{day}", use_container_width=True):
+                emoji = label_color.get(label, "•")
+
+                is_today = (
+                    day == today.day and
+                    month == today.month and
+                    year == today.year
+                )
+
+                is_selected = day == st.session_state.selected_day
+
+                text = f"{day} {emoji}\n{label}"
+
+                if cols[i].button(text, key=f"day_{day}", use_container_width=True):
                     st.session_state.selected_day = day
 
-                # LABEL BERWARNA (di bawah tanggal, tetap dalam sel)
-                cols[i].markdown(
-                    f"<div style='text-align:center;font-size:12px;font-weight:600;color:{warna};'>"
-                    f"{label}</div>",
-                    unsafe_allow_html=True
-                )
+                # highlight visual fix
+                if is_today:
+                    cols[i].markdown(
+                        "<style>button[kind='secondary'] {background:#ECFDF5 !important;}</style>",
+                        unsafe_allow_html=True
+                    )
 
 # =====================================================
 # DETAIL PANEL
