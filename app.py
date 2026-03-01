@@ -24,7 +24,6 @@ def init():
 
 model, encoder, scaler, data = init()
 
-# Aman rename kolom
 if "index" in data.columns:
     data["tanggal"] = pd.to_datetime(data["index"])
 
@@ -100,7 +99,7 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =====================================================
-# CSS AESTHETIC
+# CSS (TAMBAHAN WARNA LABEL SAJA)
 # =====================================================
 st.markdown("""
 <style>
@@ -135,19 +134,24 @@ div.stButton > button:hover {
     transform:scale(1.02);
 }
 
+/* BARIS KEDUA (LABEL) */
+div.stButton > button span:last-child {
+    font-weight:600;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 # =====================================================
-# COLOR MAP
+# WARNA LABEL
 # =====================================================
 label_color = {
-    "Penanaman": "🌱",
-    "Pemupukan": "🧪",
-    "Penyiraman": "💧",
-    "Pembersihan Gulma": "🌾",
-    "Pemanenan": "🌽",
-    "Pemantauan": "🔍"
+    "Penanaman": "#059669",
+    "Pemupukan": "#7C3AED",
+    "Penyiraman": "#0EA5E9",
+    "Pembersihan Gulma": "#F59E0B",
+    "Pemanenan": "#DC2626",
+    "Pemantauan": "#6B7280"
 }
 
 # =====================================================
@@ -168,7 +172,6 @@ with left:
         )
 
     cal = calendar.monthcalendar(year, month)
-    today = datetime.today()
 
     for week in cal:
         cols = st.columns(7)
@@ -185,27 +188,20 @@ with left:
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
 
-                emoji = label_color.get(label, "•")
-
-                is_today = (
-                    day == today.day and
-                    month == today.month and
-                    year == today.year
-                )
-
-                is_selected = day == st.session_state.selected_day
-
-                text = f"{day} {emoji}\n{label}"
+                text = f"{day}\n{label}"
 
                 if cols[i].button(text, key=f"day_{day}", use_container_width=True):
                     st.session_state.selected_day = day
 
-                # highlight visual fix
-                if is_today:
-                    cols[i].markdown(
-                        "<style>button[kind='secondary'] {background:#ECFDF5 !important;}</style>",
-                        unsafe_allow_html=True
-                    )
+                # Inject warna label spesifik per tombol
+                warna = label_color.get(label, "#374151")
+                st.markdown(f"""
+                <style>
+                button[key="day_{day}"] span:last-child {{
+                    color:{warna} !important;
+                }}
+                </style>
+                """, unsafe_allow_html=True)
 
 # =====================================================
 # DETAIL PANEL
