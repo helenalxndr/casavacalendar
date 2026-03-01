@@ -14,7 +14,7 @@ from utils.rbs import rbs_singkong_final, label_singkat
 st.set_page_config(page_title="Kalender Tanam Singkong", layout="wide")
 
 # =========================================================
-# LOAD MODEL & DATA
+# LOAD
 # =========================================================
 @st.cache_resource
 def init():
@@ -49,9 +49,6 @@ if "month" not in st.session_state:
 if "year" not in st.session_state:
     st.session_state.year = datetime.today().year
 
-if "selected_day" not in st.session_state:
-    st.session_state.selected_day = 1
-
 col1, col2, col3 = st.columns([1,6,1])
 
 with col1:
@@ -74,7 +71,7 @@ month = st.session_state.month
 year = st.session_state.year
 
 st.markdown(
-    f"<h2 style='text-align:center;'>{calendar.month_name[month]} {year}</h2>",
+    f"<h2 style='text-align:center; margin-bottom:30px;'>{calendar.month_name[month]} {year}</h2>",
     unsafe_allow_html=True
 )
 
@@ -82,15 +79,24 @@ days_in_month = calendar.monthrange(year, month)[1]
 predictions = forecast[:days_in_month]
 
 # =========================================================
-# WARNA AKTIVITAS
+# HANDLE SELECTED DAY (QUERY PARAM)
+# =========================================================
+query_params = st.query_params
+selected_day = int(query_params.get("day", 1))
+
+if selected_day > days_in_month:
+    selected_day = 1
+
+# =========================================================
+# WARNA PROFESIONAL (SOFT & SMOOTH)
 # =========================================================
 color_map = {
-    "Penanaman": "#43A047",
-    "Pemupukan": "#FB8C00",
-    "Penyiraman": "#1E88E5",
-    "Pembersihan Gulma": "#8E24AA",
-    "Pemanenan": "#FDD835",
-    "Pemantauan": "#546E7A"
+    "Penanaman": "linear-gradient(135deg, #2E7D32, #66BB6A)",
+    "Pemupukan": "linear-gradient(135deg, #EF6C00, #FFA726)",
+    "Penyiraman": "linear-gradient(135deg, #1565C0, #42A5F5)",
+    "Pembersihan Gulma": "linear-gradient(135deg, #6A1B9A, #AB47BC)",
+    "Pemanenan": "linear-gradient(135deg, #F9A825, #FFD54F)",
+    "Pemantauan": "linear-gradient(135deg, #37474F, #78909C)"
 }
 
 # =========================================================
@@ -99,13 +105,39 @@ color_map = {
 left, right = st.columns([2.5,1])
 
 # =========================================================
-# KALENDER (TAMPILAN CLEAN + CLICKABLE)
+# KALENDER SUPER CLEAN
 # =========================================================
 with left:
 
+    # CSS Modern Smooth
+    st.markdown("""
+    <style>
+    .day-card {
+        height:95px;
+        border-radius:16px;
+        padding:12px;
+        color:white;
+        text-align:center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: all 0.2s ease-in-out;
+        text-decoration:none;
+        display:block;
+    }
+    .day-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+    }
+    .day-number {
+        font-size:20px;
+        font-weight:bold;
+        margin-bottom:6px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     header = st.columns(7)
     for i, d in enumerate(["Sen","Sel","Rab","Kam","Jum","Sab","Min"]):
-        header[i].markdown(f"**{d}**")
+        header[i].markdown(f"<center><b>{d}</b></center>", unsafe_allow_html=True)
 
     cal = calendar.monthcalendar(year, month)
     today = datetime.today()
@@ -124,52 +156,39 @@ with left:
                 aktivitas_full = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas_full)
 
-                bg_color = color_map.get(label, "#546E7A")
+                bg_color = color_map.get(label, "linear-gradient(135deg,#546E7A,#90A4AE)")
 
                 border = ""
                 if day == today.day and month == today.month and year == today.year:
                     border = "border:3px solid black;"
 
-                if st.session_state.selected_day == day:
-                    border = "border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.4);"
+                if selected_day == day:
+                    border = "border:3px solid white;"
 
-                box_html = f"""
-                <div style="
-                    background:{bg_color};
-                    padding:10px;
-                    border-radius:14px;
-                    color:white;
-                    height:85px;
-                    text-align:center;
-                    {border}">
-                    <div style="font-size:20px;font-weight:bold;">{day}</div>
+                card_html = f"""
+                <a href="?day={day}" class="day-card"
+                   style="background:{bg_color}; {border}">
+                    <div class="day-number">{day}</div>
                     <div style="font-size:13px;">{label}</div>
-                </div>
+                </a>
                 """
 
-                with cols[i]:
-                    # Invisible button trigger
-                    if st.button("", key=f"btn_{day}"):
-                        st.session_state.selected_day = day
-
-                    st.markdown(box_html, unsafe_allow_html=True)
+                cols[i].markdown(card_html, unsafe_allow_html=True)
 
 # =========================================================
-# PANEL DETAIL
+# DETAIL PANEL
 # =========================================================
 with right:
 
-    selected = st.session_state.selected_day
-
-    hujan = predictions[selected-1]
-    tanggal_selected = datetime(year, month, selected)
+    hujan = predictions[selected_day-1]
+    tanggal_selected = datetime(year, month, selected_day)
     hst_selected = (tanggal_selected.date() - tanggal_tanam).days
 
     aktivitas_full = rbs_singkong_final(hujan, hst_selected)
 
     st.subheader("Detail Rekomendasi")
 
-    st.write(f"📅 {selected} {calendar.month_name[month]} {year}")
+    st.write(f"📅 {selected_day} {calendar.month_name[month]} {year}")
     st.write(f"🌱 HST: {hst_selected} hari")
     st.metric("🌧 Prediksi Hujan", f"{hujan:.2f} mm")
 
