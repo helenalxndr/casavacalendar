@@ -141,14 +141,6 @@ div.stButton > button:hover {
 # =====================================================
 # COLOR MAP
 # =====================================================
-label_color = {
-    "Penanaman": "🌱",
-    "Pemupukan": "🧪",
-    "Penyiraman": "💧",
-    "Pembersihan Gulma": "🌾",
-    "Pemanenan": "🌽",
-    "Pemantauan": "🔍"
-}
 
 # =====================================================
 # LAYOUT
@@ -185,8 +177,6 @@ with left:
                 aktivitas = rbs_singkong_final(hujan, hst)
                 label = label_singkat(aktivitas)
 
-                emoji = label_color.get(label, "•")
-
                 is_today = (
                     day == today.day and
                     month == today.month and
@@ -195,7 +185,7 @@ with left:
 
                 is_selected = day == st.session_state.selected_day
 
-                text = f"{day} {emoji}\n{label}"
+                text = f"{day}\n{label}"
 
                 if cols[i].button(text, key=f"day_{day}", use_container_width=True):
                     st.session_state.selected_day = day
