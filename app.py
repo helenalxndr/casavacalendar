@@ -32,7 +32,7 @@ kec_id = encoder.transform([selected_kecamatan])[0]
 df_kec = data[data["kecamatan"] == selected_kecamatan].copy()
 df_kec = df_kec.sort_values("tanggal")
 
-rain_last270 = df_kec["chirps_power_corrected"].values[-270:]
+rain_last270 = df_kec["rain_mm"].values[-270:]
 
 forecast_30 = recursive_forecast(
     model=model,
