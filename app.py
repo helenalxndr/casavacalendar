@@ -168,7 +168,7 @@ with left:
         for i, day in enumerate(week):
 
             if day == 0:
-                cols[i].markdown("<div style='height:95px;text-align:center;'></div>", unsafe_allow_html=True)
+                cols[i].markdown("<div style='height:95px;'></div>", unsafe_allow_html=True)
             else:
                 hujan = predictions[day-1]
                 tanggal_prediksi = datetime(year, month, day)
