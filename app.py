@@ -106,19 +106,30 @@ color_map = {
 # =========================================================
 st.markdown("""
 <style>
+div[data-testid="column"] {
+    padding-left:4px !important;
+    padding-right:4px !important;
+}
+
+div[data-testid="stHorizontalBlock"] {
+    gap:6px !important;
+}
+
 div.stButton > button {
-    height:95px;
-    border-radius:16px;
+    height:90px;
+    border-radius:14px;
     font-weight:600;
     font-size:14px;
     border:none;
-    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+    box-shadow:0 3px 8px rgba(0,0,0,0.12);
     transition:0.2s;
     white-space:pre-line;
+    padding:6px;
 }
+
 div.stButton > button:hover {
-    transform:translateY(-3px);
-    box-shadow:0 8px 18px rgba(0,0,0,0.25);
+    transform:translateY(-2px);
+    box-shadow:0 6px 14px rgba(0,0,0,0.2);
 }
 </style>
 """, unsafe_allow_html=True)
