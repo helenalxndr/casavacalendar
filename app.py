@@ -126,11 +126,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# MAIN LAYOUT
-# =========================
-col1, col2 = st.columns([3, 1])
-
 with col1:
     today = datetime.today()
     year = today.year
@@ -138,54 +133,46 @@ with col1:
 
     st.markdown(f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>", unsafe_allow_html=True)
 
-    # Ambil data kalender (list of lists)
     cal = calendar.monthcalendar(year, month)
 
-    # 1. Mulai pembungkus grid utama
-    calendar_html = "<div class='calendar'>"
+    # Buat header hari terlebih dahulu
+    nama_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+    header_html = "".join([f"<div style='text-align:center; font-weight:bold; color:#6b7280;'>{h}</div>" for h in nama_hari])
 
-    # 2. Tambahkan Header Nama Hari
-    days_header = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
-    for day_name in days_header:
-        calendar_html += f"<div style='text-align:center; font-weight:bold; color:#6b7280; font-size:12px;'>{day_name}</div>"
-
-    # 3. Looping untuk mengisi tanggal
+    # Buat isi tanggal
+    body_html = ""
     for week in cal:
         for day in week:
             if day == 0:
-                # Kotak kosong untuk hari di luar bulan berjalan
-                calendar_html += "<div></div>"
+                body_html += "<div></div>"
             else:
                 # Logika HST & Label
                 current_date = datetime(year, month, day).date()
                 hst = (current_date - tanggal_tanam).days
+                
+                if hst < 0: label, clss = "", ""
+                elif hst < 5: label, clss = "Pemantauan", "pemantauan"
+                elif hst < 90: label, clss = "Pemupukan", "pemupukan"
+                else: label, clss = "Panen", "panen"
 
-                if hst < 0:
-                    label, label_class = "", ""
-                elif hst < 5:
-                    label, label_class = "Pemantauan", "pemantauan"
-                elif hst < 90:
-                    label, label_class = "Pemupukan", "pemupukan"
-                else:
-                    label, label_class = "Panen", "panen"
+                selected = "selected" if st.session_state.selected_day == day else ""
+                
+                # Gabungkan konten ke dalam satu baris string tanpa newline yang tidak perlu
+                body_html += f'<div class="day-card {selected}" onclick="window.location.href=\'?day={day}\'"><div class="day-number">{day}</div>'
+                if label:
+                    body_html += f'<div class="label {clss}">{label}</div>'
+                body_html += '</div>'
 
-                # Logika seleksi (border biru)
-                selected_class = "selected" if st.session_state.selected_day == day else ""
+    # GABUNGKAN SEMUA ke dalam satu kontainer utama
+    full_calendar_html = f"""
+    <div class="calendar">
+        {header_html}
+        {body_html}
+    </div>
+    """
 
-                # Masukkan konten kotak ke dalam string HTML
-                calendar_html += f"""
-                <div class="day-card {selected_class}" 
-                     onclick="window.location.href='?day={day}'">
-                    <div class="day-number">{day}</div>
-                    {f"<div class='label {label_class}'>{label}</div>" if label else ""}
-                </div>
-                """
-
-    # 4. Tutup pembungkus grid
-    calendar_html += "</div>"
-
-    # 5. TAMPILKAN SEMUA SEKALIGUS (Ini kuncinya!)
-    st.markdown(calendar_html, unsafe_allow_html=True)
+    # RENDER SEKALIGUS
+    st.markdown(full_calendar_html, unsafe_allow_html=True)
 # =========================
 # HANDLE CLICK
 # =========================
