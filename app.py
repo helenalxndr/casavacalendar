@@ -12,7 +12,7 @@ st.set_page_config(layout="wide")
 # LOAD DATA
 # =========================
 model, encoder, scaler, data = load_all()
-data["index"] = pd.to_datetime(data["index"])
+data["tanggal"] = pd.to_datetime(data["tanggal"])
 
 # =========================
 # SIDEBAR
@@ -30,9 +30,9 @@ tanggal_tanam = st.sidebar.date_input("Tanggal Tanam")
 kec_id = encoder.transform([selected_kecamatan])[0]
 
 df_kec = data[data["kecamatan"] == selected_kecamatan].copy()
-df_kec = df_kec.sort_values("index")
+df_kec = df_kec.sort_values("tanggal")
 
-rain_last270 = df_kec["curah_hujan_mm"].values[-270:]
+rain_last270 = df_kec["rain_mm"].values[-270:]
 
 forecast_30 = recursive_forecast(
     model=model,
