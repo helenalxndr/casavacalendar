@@ -129,59 +129,63 @@ st.markdown("""
 # =========================
 # MAIN LAYOUT
 # =========================
-col1, col2 = st.columns([3,1])
+col1, col2 = st.columns([3, 1])
 
 with col1:
-
     today = datetime.today()
     year = today.year
     month = today.month
 
     st.markdown(f"<h2 style='text-align:center'>{calendar.month_name[month]} {year}</h2>", unsafe_allow_html=True)
 
+    # Ambil struktur minggu dan hari dari library calendar
     cal = calendar.monthcalendar(year, month)
 
-    st.markdown("<div class='calendar'>", unsafe_allow_html=True)
+    # MEMBUAT STRING HTML KALENDER
+    calendar_html = "<div class='calendar'>"
 
+    # 1. Tambahkan Header Nama Hari
+    nama_hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
+    for nh in nama_hari:
+        calendar_html += f"<div style='text-align:center; font-weight:bold; color:#6b7280; font-size:13px;'>{nh}</div>"
+
+    # 2. Tambahkan Tanggal-tanggal
     for week in cal:
         for day in week:
             if day == 0:
-                st.markdown("<div></div>", unsafe_allow_html=True)
+                # Kolom kosong untuk hari di luar bulan berjalan
+                calendar_html += "<div></div>"
             else:
-
-                # HST
+                # Hitung HST (Hari Setelah Tanam)
                 current_date = datetime(year, month, day).date()
                 hst = (current_date - tanggal_tanam).days
 
-                # Tentukan label
+                # Tentukan label dan class CSS berdasarkan HST
                 if hst < 0:
-                    label = ""
-                    label_class = ""
+                    label, label_class = "", ""
                 elif hst < 5:
-                    label = "Pemantauan"
-                    label_class = "pemantauan"
+                    label, label_class = "Pemantauan", "pemantauan"
                 elif hst < 90:
-                    label = "Pemupukan"
-                    label_class = "pemupukan"
+                    label, label_class = "Pemupukan", "pemupukan"
                 else:
-                    label = "Panen"
-                    label_class = "panen"
+                    label, label_class = "Panen", "panen"
 
-                # Selected state
-                selected_class = ""
-                if st.session_state.selected_day == day:
-                    selected_class = "selected"
+                # Cek apakah hari ini sedang dipilih (Selected)
+                selected_class = "selected" if st.session_state.selected_day == day else ""
 
-                st.markdown(f"""
-                <div class="day-card {selected_class}"
+                # Gabungkan ke dalam string HTML
+                calendar_html += f"""
+                <div class="day-card {selected_class}" 
                      onclick="window.location.href='?day={day}'">
                     <div class="day-number">{day}</div>
                     {f"<div class='label {label_class}'>{label}</div>" if label else ""}
                 </div>
-                """, unsafe_allow_html=True)
+                """
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    calendar_html += "</div>" # Tutup div class 'calendar'
 
+    # Tampilkan seluruh kalender dalam satu kali panggil
+    st.markdown(calendar_html, unsafe_allow_html=True)
 # =========================
 # HANDLE CLICK
 # =========================
