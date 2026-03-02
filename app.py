@@ -2,46 +2,56 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import calendar
+import os
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+
+# Import dari folder utils
 from utils.loader import load_all
 from utils.forecast import recursive_forecast
+from utils.rbs import kategori_hujan, rbs_singkong_final, label_singkat
 
-st.set_page_config(layout="wide", page_title="Dashboard Kalender Tanam")
+st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
 # =========================
 # 1. LOAD DATA & INITIAL STATE
 # =========================
-model, encoder, scaler, data = load_all()
-data["tanggal"] = pd.to_datetime(data["tanggal"])
+try:
+    model, encoder, scaler, data = load_all()
+    data["tanggal"] = pd.to_datetime(data["tanggal"])
+except Exception as e:
+    st.error(f"Gagal memuat resource: {e}")
+    st.stop()
 
+# State untuk Navigasi Bulan & Hari Terpilih
 if "view_date" not in st.session_state:
     st.session_state.view_date = date(2026, 3, 1)
 
 if "selected_day" not in st.session_state:
-    st.session_state.selected_day = 1
+    st.session_state.selected_day = date.today().day
 
 # =========================
-# 2. SIDEBAR & LOGIC
+# 2. SIDEBAR (PENGATURAN)
 # =========================
-st.sidebar.title("⚙ Pengaturan")
-kecamatan_list = sorted(data["kecamatan"].unique())
-selected_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kecamatan_list)
-tanggal_tanam = st.sidebar.date_input("Tanggal Tanam", value=date(2026, 3, 1))
+st.sidebar.title("⚙️ Pengaturan")
+kec_list = sorted(data["kecamatan"].unique())
+sel_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kec_list)
+tgl_tanam = st.sidebar.date_input("Tanggal Tanam", value=date(2026, 3, 1))
 
-kec_id = encoder.transform([selected_kecamatan])[0]
-df_kec = data[data["kecamatan"] == selected_kecamatan].copy().sort_values("tanggal")
+# Jalankan Forecast (31 hari agar mencakup semua kemungkinan tgl di bulan)
+kec_id = encoder.transform([sel_kecamatan])[0]
+df_kec = data[data["kecamatan"] == sel_kecamatan].copy().sort_values("tanggal")
 rain_last270 = df_kec["rain_mm"].values[-270:]
-forecast_30 = recursive_forecast(model=model, scaler=scaler, rain_last270=rain_last270, kec_id=kec_id, days=30)
+forecast_30 = recursive_forecast(model=model, scaler=scaler, rain_last270=rain_last270, kec_id=kec_id, days=31)
 
 # =========================
-# 3. CSS CUSTOM (Center & Block Labels)
+# 3. CSS CUSTOM (Center Text & Blocks)
 # =========================
 st.markdown("""
 <style>
-    /* Styling Tombol Kalender */
+    /* Kotak Kalender */
     div.stButton > button {
-        height: 110px;
+        height: 120px;
         width: 100%;
         border-radius: 12px;
         border: 1px solid #e5e7eb;
@@ -52,7 +62,8 @@ st.markdown("""
         justify-content: center !important;
         text-align: center !important;
         transition: 0.2s;
-        padding: 5px !important;
+        padding: 10px !important;
+        white-space: pre-wrap;
     }
     
     div.stButton > button:hover {
@@ -65,27 +76,21 @@ st.markdown("""
         background-color: #eff6ff !important;
     }
 
-    /* Ukuran Angka Tanggal */
+    /* Angka Tanggal Utama */
     div.stButton > button p {
-        font-size: 22px !important;
+        font-size: 24px !important;
         font-weight: bold !important;
         margin: 0 !important;
         line-height: 1.2 !important;
     }
 
-    /* Container untuk Label Blok Warna di dalam Button */
-    .status-badge {
-        font-size: 10px;
+    /* Status Text di bawah Angka */
+    .status-subtext {
+        font-size: 11px;
         font-weight: bold;
-        text-transform: uppercase;
-        padding: 2px 8px;
-        border-radius: 6px;
-        margin-top: 8px;
-        display: inline-block;
+        margin-top: 5px;
+        display: block;
     }
-    .bg-pantau { background-color: #e0f2fe; color: #0369a1; }
-    .bg-pupuk { background-color: #ede9fe; color: #6d28d9; }
-    .bg-panen { background-color: #dcfce7; color: #166534; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -96,56 +101,47 @@ col1, col2 = st.columns([3, 1])
 
 with col1:
     # --- NAVIGASI BULAN ---
-    nav_left, nav_mid, nav_right = st.columns([1, 2, 1])
-    with nav_left:
-        if st.button("⬅️ Prev", key="btn_prev"):
+    n_col1, n_col2, n_col3 = st.columns([1, 2, 1])
+    with n_col1:
+        if st.button("⬅ Sebelumnya", key="prev_btn"):
             st.session_state.view_date -= relativedelta(months=1)
             st.rerun()
-    with nav_mid:
-        current_view = st.session_state.view_date
-        st.markdown(f"<h2 style='text-align:center; margin:0;'>{calendar.month_name[current_view.month]} {current_view.year}</h2>", unsafe_allow_html=True)
-    with nav_right:
-        if st.button("Next ➡️", key="btn_next"):
+    with n_col2:
+        cv = st.session_state.view_date
+        st.markdown(f"<h2 style='text-align:center; margin-top:-5px;'>{calendar.month_name[cv.month]} {cv.year}</h2>", unsafe_allow_html=True)
+    with n_col3:
+        if st.button("Selanjutnya ➡️", key="next_btn"):
             st.session_state.view_date += relativedelta(months=1)
             st.rerun()
 
-    # --- GRID HEADER ---
-    cols_header = st.columns(7)
-    for i, hari in enumerate(["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]):
-        cols_header[i].markdown(f"<p style='text-align:center; font-weight:bold; color:gray; font-size:14px;'>{hari}</p>", unsafe_allow_html=True)
+    # --- HEADER HARI ---
+    h_cols = st.columns(7)
+    for i, h in enumerate(["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]):
+        h_cols[i].markdown(f"<p style='text-align:center; font-weight:bold; color:gray;'>{h}</p>", unsafe_allow_html=True)
 
     # --- GRID KALENDER ---
-    cal_matrix = calendar.monthcalendar(current_view.year, current_view.month)
+    cal_matrix = calendar.monthcalendar(cv.year, cv.month)
     for week in cal_matrix:
-        week_cols = st.columns(7)
+        w_cols = st.columns(7)
         for i, day in enumerate(week):
             if day == 0:
-                week_cols[i].write("")
+                w_cols[i].write("")
             else:
-                this_date = date(current_view.year, current_view.month, day)
-                hst = (this_date - tanggal_tanam).days
+                curr_dt = date(cv.year, cv.month, day)
+                hst = (curr_dt - tgl_tanam).days
                 
-                # Menentukan Label & Class CSS (Tanpa Emoji)
-                status_label = ""
-                bg_class = ""
-                if 0 <= hst < 5:
-                    status_label = "Pemantauan"
-                    bg_class = "bg-pantau"
-                elif 5 <= hst < 90:
-                    status_label = "Pemupukan"
-                    bg_class = "bg-pupuk"
-                elif hst >= 90:
-                    status_label = "Panen"
-                    bg_class = "bg-panen"
+                # Ambil Prediksi Hujan & Logika RBS
+                idx = min(max(0, day - 1), len(forecast_30) - 1)
+                hujan_val = forecast_30[idx]
+                
+                # Memanggil fungsi dari utils/rbs.py
+                rekom_full = rbs_singkong_final(hujan_val, hst)
+                label_txt = label_singkat(rekom_full)
 
-                # Trick: Karena st.button tidak mendukung HTML di labelnya, 
-                # kita gunakan st.markdown untuk menggambar visualnya, 
-                # tapi tetap menggunakan tombol transparan atau tombol standar dengan label teks.
-                # Agar Center & Berwarna, kita gunakan format string dengan spasi/newline.
+                # Visual Tombol: Angka di atas, Label di bawah (Center)
+                btn_display = f"{day}\n{label_txt.upper()}"
                 
-                display_text = f"{day}\n{status_label}" if status_label else f"{day}"
-                
-                if week_cols[i].button(display_text, key=f"day_{current_view.month}_{day}", use_container_width=True):
+                if w_cols[i].button(btn_display, key=f"day_{cv.month}_{day}", use_container_width=True):
                     st.session_state.selected_day = day
                     st.rerun()
 
@@ -153,27 +149,29 @@ with col1:
 # 5. DETAIL PANEL
 # =========================
 with col2:
-    st.markdown("### 📋 Detail Hari")
-    sel_day = st.session_state.selected_day
+    st.markdown("### 📋 Detail Rekomendasi")
+    
+    sd = st.session_state.selected_day
     try:
-        active_date = date(current_view.year, current_view.month, sel_day)
+        active_dt = date(cv.year, cv.month, sd)
     except:
-        active_date = date(current_view.year, current_view.month, 1)
+        active_dt = date(cv.year, cv.month, 1)
 
-    hst_active = (active_date - tanggal_tanam).days
-    idx_rain = min(max(0, active_date.day - 1), len(forecast_30) - 1)
-    rain_val = forecast_30[idx_rain]
+    hst_active = (active_dt - tgl_tanam).days
+    idx_active = min(max(0, active_dt.day - 1), len(forecast_30) - 1)
+    h_active = forecast_30[idx_active]
+    
+    # Detail RBS dari utils
+    detail_rekom = rbs_singkong_final(h_active, hst_active)
 
-    st.info(f"📅 **{active_date.strftime('%d %B %Y')}**\n\n🌱 **HST:** {hst_active} hari\n\n☔ **Hujan:** {rain_val:.2f} mm")
+    st.info(f"""
+    **📅 Tanggal:** {active_dt.strftime('%d %B %Y')}  
+    **🌱 Usia (HST):** {hst_active} hari  
+    **☔ Prediksi Hujan:** {h_active:.2f} mm
+    """)
 
-    if hst_active < 0:
-        st.write("Belum masa tanam.")
-    elif hst_active < 5:
-        st.write("Fase Pemantauan Awal.")
-    elif hst_active < 90:
-        st.success("Kondisi mendukung untuk pemupukan.")
-    else:
-        st.warning("Perhatikan kesiapan lahan untuk panen.")
+    st.success(f"**💡 Saran Aktivitas:**\n{detail_rekom}")
 
     st.divider()
+    st.markdown("**Tren Curah Hujan (30 Hari)**")
     st.line_chart(forecast_30)
