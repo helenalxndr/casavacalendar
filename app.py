@@ -13,6 +13,7 @@ from utils.calendar_logic import get_forecast_index, get_hst, get_color
 from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
+
 st.markdown("""
 <style>
 .calendar-row {
@@ -127,27 +128,27 @@ with col1:
     for i, h in enumerate(hari):
         cols[i].markdown(f"<center><b>{h}</b></center>", unsafe_allow_html=True)
 
-    # Grid kalender   
-    
+    # Grid kalender
     cal_matrix = calendar.monthcalendar(cv.year, cv.month)
-    st.markdown('<div class="calendar-row">', unsafe_allow_html=True)
-    w_cols = st.columns(7)
-       for i, day in enumerate(week):
+
+    for week in cal_matrix:
+        st.markdown('<div class="calendar-row">', unsafe_allow_html=True)
+        w_cols = st.columns(7)
+        for i, day in enumerate(week):
             if day == 0:
                 w_cols[i].write("")
             else:
                 curr_dt = date(cv.year, cv.month, day)
-    st.markdown('</div>', unsafe_allow_html=True)
+                
                 # HST & forecast index
                 hst = get_hst(curr_dt, tgl_tanam)
                 idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
-
-                hujan_val = forecast_30[idx]
+                
+                # Ambil nilai hujan dari forecast (pake 0 jika di luar jangkauan forecast)
+                hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
 
                 # RBS
                 fase, detail, kode = rbs_singkong_final(hujan_val, hst)
-                
-                rekom_full = detail
                 label_txt = fase
 
                 # Warna aktivitas
@@ -164,6 +165,7 @@ with col1:
                 ):
                     st.session_state.selected_day = day
                     st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================
 # 6. DETAIL PANEL
@@ -179,9 +181,11 @@ with col2:
 
     hst = get_hst(active_dt, tgl_tanam)
     idx = get_forecast_index(active_dt, start_pred_date, len(forecast_30))
-    hujan_val = forecast_30[idx]
+    
+    # Proteksi index
+    hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
 
-    fase, detail, kode= rbs_singkong_final(hujan_val, hst)
+    fase, detail, kode = rbs_singkong_final(hujan_val, hst)
 
     st.info(
         f"**Tanggal:** {active_dt.strftime('%d %B %Y')}\n\n"
@@ -189,7 +193,7 @@ with col2:
         f"**Prediksi Hujan:** {hujan_val:.2f} mm"
     )
 
-    st.success(f"**Rekomendasi Fase:**\n{fase}\n{detail}")
+    st.success(f"**Rekomendasi Fase:**\n\n{fase}\n\n{detail}")
 
     st.caption("⚠️ Aktivitas menunjukkan rentang waktu optimal, bukan harus dilakukan setiap hari.")
 
@@ -203,10 +207,10 @@ with col2:
     st.markdown("### 🎨 Keterangan Warna")
 
     st.markdown("""
-    🟢 Penanaman  
-    🔵 Penyiraman  
-    🟡 Pemupukan  
-    🟣 Penyiangan  
-    🔴 Pemanenan  
-    ⚪ Pemantauan  
+    - 🟢 Penanaman  
+    - 🔵 Penyiraman  
+    - 🟡 Pemupukan  
+    - 🟣 Penyiangan  
+    - 🔴 Pemanenan  
+    - ⚪ Pemantauan  
     """)
