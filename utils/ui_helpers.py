@@ -1,11 +1,14 @@
 import streamlit as st
 
-def render_day_button(col, day, label, color, key):
+def render_day_button(col, day, label, color, key, selected=False):
+
+    border = "3px solid black" if selected else "1px solid #ddd"
+
     btn_html = f"""
     <div style="
-        height:105px;
+        height:100px;
         border-radius:10px;
-        border:1px solid #e5e7eb;
+        border:{border};
         background-color:{color};
         display:flex;
         flex-direction:column;
@@ -14,11 +17,12 @@ def render_day_button(col, day, label, color, key):
         color:white;
         font-weight:bold;
     ">
-        <div style="font-size:18px;">{day}</div>
-        <div style="font-size:10px;">{label}</div>
+        <div style="font-size:18px">{day}</div>
+        <div style="font-size:10px">{label}</div>
     </div>
     """
 
+    # 🔥 INI YANG PENTING
     return col.button(
         btn_html,
         key=key,
