@@ -142,17 +142,25 @@ with col1:
             label = label_singkat(rekom)
             warna = warna_aktivitas(label)
 
-            # BUTTON TANPA LABEL (HANYA TANGGAL)
-            if w_cols[i].button(str(day), key=f"day_{cv.month}_{day}", use_container_width=True):
+            key_btn = f"day_{cv.month}_{day}"
+            
+            clicked = w_cols[i].button(
+                str(day),
+                key=key_btn,
+                use_container_width=True
+            )
+            
+            if clicked:
                 st.session_state.selected_day = day
                 st.rerun()
-
-            # STYLE WARNA
+            
+            # CSS TARGET BERDASARKAN KEY (WORKING)
             st.markdown(f"""
             <style>
-            div[data-testid="stButton"] button[key="day_{cv.month}_{day}"] {{
+            div[data-testid="stButton"]:has(button[data-testid="{key_btn}"]) button {{
                 background-color: {warna}40 !important;
                 border: 2px solid {warna} !important;
+                color: black !important;
             }}
             </style>
             """, unsafe_allow_html=True)
