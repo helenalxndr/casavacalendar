@@ -127,8 +127,7 @@ with col1:
     for i, h in enumerate(hari):
         cols[i].markdown(f"<center><b>{h}</b></center>", unsafe_allow_html=True)
 
-    # Grid kalender
-    cal_matrix = calendar.monthcalendar(cv.year, cv.month)
+    # Grid kalender    cal_matrix = calendar.monthcalendar(cv.year, cv.month)
 
     st.markdown('<div class="calendar-row">', unsafe_allow_html=True)
     w_cols = st.columns(7)
