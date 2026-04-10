@@ -1,103 +1,73 @@
-import streamlit as st
-import calendar
-from datetime import date
-from dateutil.relativedelta import relativedelta
-from utils.rbs import rbs_singkong_final, label_singkat
+for week in cal_matrix:
+    cols = st.columns(7)
 
-def get_color(label):
-    label = label.upper()
+    for i, day in enumerate(week):
 
-    if "TANAM" in label:
-        return "#bbf7d0", "#22c55e"
-    elif "SIRAM" in label:
-        return "#bae6fd", "#0ea5e9"
-    elif "PUPUK" in label or "GULMA" in label:
-        return "#fef08a", "#eab308"
-    elif "PANEN" in label:
-        return "#fecaca", "#ef4444"
+        if day == 0:
+            cols[i].write("")
+            continue
 
-    return "#f3f4f6", "#d1d5db"
+        curr_dt = date(cv.year, cv.month, day)
+        hst = (curr_dt - tgl_tanam).days
+        idx = min(max(0, day-1), len(forecast_30)-1)
 
+        label = label_singkat(
+            rbs_singkong_final(forecast_30[idx], hst)
+        )
 
-def render_calendar(cv, tgl_tanam, forecast_30):
-    selected_day = None
+        bg, border = get_color(label)
 
-    # =========================
-    # NAVIGASI
-    # =========================
-    n1, n2, n3 = st.columns([1,2,1])
+        key = f"day_{cv.month}_{day}"
 
-    with n1:
-        if st.button("❮ Sebelumnya"):
-            st.session_state.view_date = cv - relativedelta(months=1)
-            st.rerun()
+        with cols[i]:
 
-    with n2:
-        st.markdown(f"<h3 style='text-align:center'>{calendar.month_name[cv.month]} {cv.year}</h3>", unsafe_allow_html=True)
+            # =========================
+            # OVERLAY CONTAINER
+            # =========================
+            st.markdown(f"""
+            <div style="
+                position:relative;
+                height:105px;
+                border-radius:12px;
+                overflow:hidden;
+            ">
 
-    with n3:
-        if st.button("Selanjutnya ❯"):
-            st.session_state.view_date = cv + relativedelta(months=1)
-            st.rerun()
-
-    st.write("")
-
-    # =========================
-    # HEADER HARI
-    # =========================
-    h_cols = st.columns(7)
-    for i, h in enumerate(["Sen","Sel","Rab","Kam","Jum","Sab","Min"]):
-        h_cols[i].markdown(f"<p style='text-align:center;font-weight:bold'>{h}</p>", unsafe_allow_html=True)
-
-    # =========================
-    # GRID KALENDER (OVERLAY FIX)
-    # =========================
-    cal_matrix = calendar.monthcalendar(cv.year, cv.month)
-
-    for week in cal_matrix:
-        cols = st.columns(7)
-
-        for i, day in enumerate(week):
-
-            if day == 0:
-                cols[i].write("")
-                continue
-
-            curr_dt = date(cv.year, cv.month, day)
-            hst = (curr_dt - tgl_tanam).days
-            idx = min(max(0, day-1), len(forecast_30)-1)
-
-            label = label_singkat(
-                rbs_singkong_final(forecast_30[idx], hst)
-            )
-
-            bg, border = get_color(label)
-
-            with cols[i]:
-                # 🔵 BOX WARNA (BACKGROUND)
-                st.markdown(f"""
+                <!-- BOX WARNA (LAYER BAWAH) -->
                 <div style="
-                    position:relative;
-                    height:105px;
-                    border-radius:12px;
-                    border:2px solid {border};
+                    position:absolute;
+                    inset:0;
                     background:{bg};
+                    border:2px solid {border};
+                    border-radius:12px;
                     display:flex;
                     align-items:center;
                     justify-content:center;
                     font-size:20px;
                     font-weight:bold;
+                    z-index:1;
                 ">
                     {day}
                 </div>
-                """, unsafe_allow_html=True)
 
-                # 🔴 BUTTON TRANSPARAN (OVERLAY)
-                if st.button(
-                    " ",
-                    key=f"day_{cv.month}_{day}",
-                    use_container_width=True
-                ):
-                    selected_day = day
+                <!-- BUTTON OVERLAY (LAYER ATAS) -->
+                <form action="" method="post">
+                    <button name="clicked_day" value="{day}" style="
+                        position:absolute;
+                        inset:0;
+                        width:100%;
+                        height:100%;
+                        background:transparent;
+                        border:none;
+                        cursor:pointer;
+                        z-index:2;
+                    "></button>
+                </form>
 
-    return selected_day
+            </div>
+            """, unsafe_allow_html=True)
+
+            # =========================
+            # HANDLE CLICK (STREAMLIT)
+            # =========================
+            if st.button(" ", key=key, use_container_width=True):
+                selected_day = day
