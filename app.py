@@ -10,6 +10,7 @@ from utils.loader import load_all
 from utils.forecast import recursive_forecast
 from utils.rbs import rbs_singkong_final, label_singkat
 from utils.calendar_logic import get_forecast_index, get_hst, get_color
+from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
