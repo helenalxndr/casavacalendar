@@ -5,108 +5,169 @@ import calendar
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 
-# --- SETUP & DATA (Asumsi fungsi loader & rbs sudah benar) ---
+# --- MOCK / UTILS (Pastikan fungsi ini ada di file lo) ---
+from utils.loader import load_all
+from utils.forecast import recursive_forecast
+from utils.rbs import rbs_singkong_final, label_singkat
+
+st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
+
+# =========================
+# 1. LOAD DATA & STATE
+# =========================
+try:
+    model, encoder, scaler, data = load_all()
+except:
+    st.error("Gagal load data.")
+    st.stop()
+
 if "view_date" not in st.session_state:
     st.session_state.view_date = date(2026, 4, 1)
 
-# --- CSS SUPER AGRESIF ---
-# Kita pakai selector yang lebih luas agar pasti kena ke tombolnya
+if "selected_day" not in st.session_state:
+    st.session_state.selected_day = 10
+
+# =========================
+# 2. CSS "BULLETPROOF"
+# =========================
+# Kita pakai selector yang sangat spesifik untuk menembus proteksi Streamlit
 st.markdown("""
 <style>
-    /* Styling dasar semua tombol kalender */
-    .stButton > button {
-        height: 100px !important;
+    /* Reset & Dasar Button */
+    div.stButton > button {
+        height: 110px !important;
         width: 100% !important;
-        border-radius: 10px !important;
-        border: 2px solid #f0f2f6 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        transition: 0.2s !important;
+        border-radius: 12px !important;
+        border: 2px solid #E2E8F0 !important;
+        background-color: white !important; /* Default */
+        transition: all 0.2s ease !important;
     }
 
-    /* Warna Hijau: Tanam */
-    .tanam-style button { background-color: #d1fae5 !important; border-color: #10b981 !important; }
-    
-    /* Warna Biru: Siram */
-    .siram-style button { background-color: #dbeafe !important; border-color: #3b82f6 !important; }
-    
-    /* Warna Kuning: Pupuk/Siang (Range Waktu) */
-    .pupuk-style button { background-color: #fef3c7 !important; border-color: #f59e0b !important; }
-    
-    /* Warna Merah: Panen */
-    .panen-style button { background-color: #fee2e2 !important; border-color: #ef4444 !important; }
+    /* Penekanan teks dalam button */
+    div.stButton > button p { font-size: 22px !important; font-weight: 800 !important; margin: 0 !important; }
+    div.stButton > button div { font-size: 10px !important; font-weight: 700 !important; }
 
-    /* Efek hover agar tetap interaktif */
-    .stButton > button:hover { transform: scale(1.02); filter: brightness(0.95); }
-    
-    /* Legenda Box */
-    .legend-item {
-        padding: 10px; border-radius: 5px; font-weight: bold; font-size: 12px;
-        text-align: center; border: 1px solid #ddd;
+    /* PEWARNAAN BERDASARKAN WRAPPER */
+    /* Hijau: Tanam */
+    .fase-tanam button { background-color: #C6F6D5 !important; border-color: #48BB78 !important; }
+    /* Biru: Siram */
+    .fase-siram button { background-color: #BEE3F8 !important; border-color: #4299E1 !important; }
+    /* Kuning: Pupuk / Penyiangan (INI RANGE) */
+    .fase-pupuk button { background-color: #FEF3C7 !important; border-color: #F6E05E !important; }
+    /* Merah: Panen */
+    .fase-panen button { background-color: #FED7D7 !important; border-color: #F56565 !important; }
+
+    /* Legend Box */
+    .legend-card {
+        padding: 15px; border-radius: 10px; text-align: center; 
+        font-weight: bold; border: 1px solid #CBD5E0;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER & NAVIGASI ---
-col_n1, col_n2, col_n3 = st.columns([1, 2, 1])
-with col_n1:
-    if st.button("❮ Sebelumnya", use_container_width=True):
-        st.session_state.view_date -= relativedelta(months=1)
-        st.rerun()
-with col_n2:
-    cv = st.session_state.view_date
-    st.markdown(f"<h2 style='text-align:center;'>{calendar.month_name[cv.month]} {cv.year}</h2>", unsafe_allow_html=True)
-with col_n3:
-    if st.button("Selanjutnya ❯", use_container_width=True):
-        st.session_state.view_date += relativedelta(months=1)
-        st.rerun()
+# =========================
+# 3. SIDEBAR & LOGIC
+# =========================
+st.sidebar.title("⚙️ Pengaturan")
+kec_list = sorted(data["kecamatan"].unique())
+sel_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kec_list)
+tgl_tanam = st.sidebar.date_input("Tanggal Tanam", value=date(2026, 3, 1))
 
-# --- LEGENDA (PENTING: Edukasi User) ---
-st.markdown("### 💡 Panduan Warna")
-l1, l2, l3, l4 = st.columns(4)
-l1.markdown('<div class="legend-item" style="background-color:#d1fae5">🌱 Penanaman</div>', unsafe_allow_html=True)
-l2.markdown('<div class="legend-item" style="background-color:#dbeafe">💧 Penyiraman</div>', unsafe_allow_html=True)
-l3.markdown('<div class="legend-item" style="background-color:#fef3c7">⚠️ Rentang Pemupukan</div>', unsafe_allow_html=True)
-l4.markdown('<div class="legend-item" style="background-color:#fee2e2">🚜 Panen</div>', unsafe_allow_html=True)
+kec_id = encoder.transform([sel_kecamatan])[0]
+df_kec = data[data["kecamatan"] == sel_kecamatan].copy().sort_values("tanggal")
+rain_last270 = df_kec["rain_mm"].values[-270:]
+forecast_30 = recursive_forecast(model=model, scaler=scaler, rain_last270=rain_last270, kec_id=kec_id, days=31)
 
-st.caption("*(Warna kuning berarti periode yang disarankan. Anda tidak perlu memupuk setiap hari, cukup pilih hari yang cuacanya pas di dalam rentang tersebut)*")
+# =========================
+# 4. MAIN LAYOUT
+# =========================
+col1, col2 = st.columns([3, 1])
 
-# --- GRID KALENDER ---
-cal_matrix = calendar.monthcalendar(cv.year, cv.month)
-days_header = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
-h_cols = st.columns(7)
-for i, d in enumerate(days_header):
-    h_cols[i].markdown(f"<p style='text-align:center; font-weight:bold; color:gray;'>{d}</p>", unsafe_allow_html=True)
+with col1:
+    # --- NAVIGASI BULAN ---
+    n1, n2, n3 = st.columns([1, 2, 1])
+    with n1:
+        if st.button("❮ Sebelumnya", key="prev_btn"):
+            st.session_state.view_date -= relativedelta(months=1); st.rerun()
+    with n2:
+        cv = st.session_state.view_date
+        st.markdown(f"<h2 style='text-align:center;'>{calendar.month_name[cv.month]} {cv.year}</h2>", unsafe_allow_html=True)
+    with n3:
+        if st.button("Selanjutnya ❯", key="next_btn"):
+            st.session_state.view_date += relativedelta(months=1); st.rerun()
 
-# Logic Rendering
-tgl_tanam = date(2026, 3, 1) # Contoh tanggal tanam
+    # --- LEGENDA & EDUKASI (Solusi buat user non-teknis) ---
+    st.write("---")
+    l1, l2, l3, l4 = st.columns(4)
+    l1.markdown('<div class="legend-card" style="background-color:#C6F6D5">🌱 Tanam</div>', unsafe_allow_html=True)
+    l2.markdown('<div class="legend-card" style="background-color:#BEE3F8">💧 Siram</div>', unsafe_allow_html=True)
+    l3.markdown('<div class="legend-card" style="background-color:#FEF3C7">🧪 Rentang Pupuk</div>', unsafe_allow_html=True)
+    l4.markdown('<div class="legend-card" style="background-color:#FED7D7">🚜 Panen</div>', unsafe_allow_html=True)
+    
+    st.info("💡 **Tips untuk Petani:** Hari yang berwarna **Kuning** adalah **rentang waktu** yang cocok untuk pemupukan. Anda tidak harus memupuk setiap hari, cukup pilih salah satu hari yang cuacanya mendukung di dalam rentang tersebut.")
 
-for week in cal_matrix:
-    w_cols = st.columns(7)
-    for i, day in enumerate(week):
-        if day == 0:
-            w_cols[i].write("")
-        else:
-            # Contoh sederhana penentuan fase (Ganti dengan fungsi rbs_singkong_final Anda)
-            curr_date = date(cv.year, cv.month, day)
-            hst = (curr_date - tgl_tanam).days
-            
-            # --- LOGIKA PENENTUAN CLASS ---
-            phase_class = ""
-            label = "NORMAL"
-            
-            if 0 <= hst <= 5: 
-                phase_class = "tanam-style"; label = "TANAM"
-            elif 30 <= hst <= 45: # Range pemupukan (April 2026 jika tanam Maret)
-                phase_class = "pupuk-style"; label = "PUPUK"
-            elif hst > 270:
-                phase_class = "panen-style"; label = "PANEN"
+    # --- GRID KALENDER ---
+    cal_matrix = calendar.monthcalendar(cv.year, cv.month)
+    cols = st.columns(7)
+    for i, d in enumerate(["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]):
+        cols[i].markdown(f"<p style='text-align:center; font-weight:bold; color:#718096;'>{d}</p>", unsafe_allow_html=True)
+
+    for week in cal_matrix:
+        w_cols = st.columns(7)
+        for i, day in enumerate(week):
+            if day == 0:
+                w_cols[i].write("")
             else:
-                phase_class = "siram-style"; label = "SIRAM"
+                curr_dt = date(cv.year, cv.month, day)
+                
+                # Perhitungan HST (Hari Setelah Tanam)
+                # Formula: $HST = t_{current} - t_{planting}$
+                hst = (curr_dt - tgl_tanam).days
+                
+                idx = min(max(0, day - 1), len(forecast_30) - 1)
+                hujan_val = forecast_30[idx]
+                
+                # Ambil rekomendasi
+                rekom_full = rbs_singkong_final(hujan_val, hst)
+                label_txt = label_singkat(rekom_full).upper()
+                
+                # Tentukan Fase untuk Class CSS
+                phase_class = "fase-default"
+                if "TANAM" in label_txt: phase_class = "fase-tanam"
+                elif "SIRAM" in label_txt: phase_class = "fase-siram"
+                elif "PUPUK" in label_txt or "SIANG" in label_txt: phase_class = "fase-pupuk"
+                elif "PANEN" in label_txt: phase_class = "fase-panen"
 
-            # --- TRICK: BUNGKUS DENGAN DIV CLASS ---
-            with w_cols[i]:
-                st.markdown(f'<div class="{phase_class}">', unsafe_allow_html=True)
-                if st.button(f"{day}\n{label}", key=f"btn_{day}_{cv.month}"):
-                    st.write(f"Klik tanggal {day}")
-                st.markdown('</div>', unsafe_allow_html=True)
+                # RENDER BUTTON DENGAN WRAPPER
+                with w_cols[i]:
+                    st.markdown(f'<div class="{phase_class}">', unsafe_allow_html=True)
+                    if st.button(f"{day}\n{label_txt}", key=f"d_{cv.month}_{day}"):
+                        st.session_state.selected_day = day
+                        st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+# =========================
+# 5. DETAIL PANEL
+# =========================
+with col2:
+    st.markdown("### 📋 Detail Hari")
+    sd = st.session_state.selected_day
+    try: active_dt = date(cv.year, cv.month, sd)
+    except: active_dt = date(cv.year, cv.month, 1)
+
+    hst_active = (active_dt - tgl_tanam).days
+    idx_a = min(max(0, sd - 1), len(forecast_30) - 1)
+    h_a = forecast_30[idx_a]
+    rekom_d = rbs_singkong_final(h_a, hst_active)
+
+    st.markdown(f"""
+    <div style="background-color:#EDF2F7; padding:15px; border-radius:10px;">
+        <b>Tanggal:</b> {active_dt.strftime('%d %B %Y')}<br>
+        <b>Umur Tanaman:</b> {hst_active} Hari<br>
+        <b>Prediksi Hujan:</b> {h_a:.2f} mm
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.success(f"**Saran Tindakan:**\n\n{rekom_d}")
+    st.divider()
+    st.line_chart(forecast_30)
