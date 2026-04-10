@@ -16,12 +16,23 @@ st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
 st.markdown("""
 <style>
-button[kind="secondary"] {
+
+/* NAV BUTTON ONLY (prev & next) */
+button[data-testid="baseButton-secondary"][key="prev_btn"],
+button[data-testid="baseButton-secondary"][key="next_btn"] {
     background-color: white !important;
-    color: black !important;
-    border: 1px solid #ddd !important;
-    font-weight: bold !important;
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
 }
+
+/* hover nav only */
+button[data-testid="baseButton-secondary"][key="prev_btn"]:hover,
+button[data-testid="baseButton-secondary"][key="next_btn"]:hover {
+    background-color: #f3f4f6 !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
