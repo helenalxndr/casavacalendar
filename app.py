@@ -62,7 +62,7 @@ if len(df_kec) < 270:
 
 rain_last270 = df_kec["rain_mm"].values[-270:]
 
-# Forecast 30 hari
+# Forecast
 forecast_30 = recursive_forecast(
     model=model,
     scaler=scaler,
@@ -121,7 +121,7 @@ with col1:
             else:
                 curr_dt = date(cv.year, cv.month, day)
 
-                # Hitung HST & index forecast
+                # HST & forecast index
                 hst = get_hst(curr_dt, tgl_tanam)
                 idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
 
@@ -131,32 +131,18 @@ with col1:
                 rekom_full = rbs_singkong_final(hujan_val, hst)
                 label_txt = label_singkat(rekom_full)
 
-                # Warna
+                # Warna aktivitas
                 color = get_color(label_txt)
 
-                # Highlight selected
-                border = "3px solid black" if day == st.session_state.selected_day else "1px solid #ddd"
-
-                # Render kotak
-                btn_html = f"""
-                <div style="
-                    height:100px;
-                    border-radius:10px;
-                    border:{border};
-                    background-color:{color};
-                    display:flex;
-                    flex-direction:column;
-                    justify-content:center;
-                    align-items:center;
-                    color:white;
-                    font-weight:bold;
-                ">
-                    <div style="font-size:18px">{day}</div>
-                    <div style="font-size:10px">{label_txt}</div>
-                </div>
-                """
-
-                if w_cols[i].button(btn_html, key=f"{cv.month}_{day}", use_container_width=True):
+                # Render tombol
+                if render_day_button(
+                    w_cols[i],
+                    day,
+                    label_txt,
+                    color,
+                    key=f"{cv.month}_{day}",
+                    selected=(day == st.session_state.selected_day)
+                ):
                     st.session_state.selected_day = day
                     st.rerun()
 
