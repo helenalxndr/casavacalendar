@@ -175,7 +175,7 @@ with col2:
     idx = get_forecast_index(active_dt, start_pred_date, len(forecast_30))
     hujan_val = forecast_30[idx]
 
-    fase, detail= rbs_singkong_final(hujan_val, hst)
+    fase, detail, kode= rbs_singkong_final(hujan_val, hst)
 
     st.info(
         f"**Tanggal:** {active_dt.strftime('%d %B %Y')}\n\n"
