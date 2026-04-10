@@ -13,7 +13,24 @@ from utils.calendar_logic import get_forecast_index, get_hst, get_color
 from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
+st.markdown("""
+<style>
+.calendar-row {
+    margin-bottom: 8px;  /* ini jarak antar baris tanggal */
+}
 
+/* kasih gap antar column juga */
+div[data-testid="stHorizontalBlock"] {
+    gap: 8px;
+}
+
+/* opsional: rapikan column spacing */
+div[data-testid="column"] {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # =========================
 # 1. LOAD DATA
@@ -113,15 +130,14 @@ with col1:
     # Grid kalender
     cal_matrix = calendar.monthcalendar(cv.year, cv.month)
 
-    for week in cal_matrix:
-        w_cols = st.columns(7)
-
+    st.markdown('<div class="calendar-row">', unsafe_allow_html=True)
+    w_cols = st.columns(7)
         for i, day in enumerate(week):
             if day == 0:
                 w_cols[i].write("")
             else:
                 curr_dt = date(cv.year, cv.month, day)
-
+    st.markdown('</div>', unsafe_allow_html=True)
                 # HST & forecast index
                 hst = get_hst(curr_dt, tgl_tanam)
                 idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
