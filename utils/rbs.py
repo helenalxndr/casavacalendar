@@ -1,130 +1,71 @@
-import numpy as np
-
-
-# =========================
-# 1. KATEGORI HUJAN (SAFE)
-# =========================
-def kategori_hujan(hujan_mm):
-    try:
-        if hujan_mm is None or np.isnan(float(hujan_mm)):
-            return "Tidak Diketahui"
-    except:
-        return "Tidak Diketahui"
-
-    hujan_mm = float(hujan_mm)
-
-    if hujan_mm < 5:
-        return "Rendah"
-    elif hujan_mm <= 15:
-        return "Sedang"
-    else:
-        return "Tinggi"
-
-
-# =========================
-# 2. RULE BASED SYSTEM SINGKONG
-# =========================
 def rbs_singkong_final(hujan_mm, hst):
 
     kategori = kategori_hujan(hujan_mm)
     hst = int(hst)
 
-    # =========================
-    # PRA-TANAM
-    # =========================
+    # ================= PRA TANAM =================
     if hst < 0:
         if kategori == "Sedang":
-            return "Waktu Tanam Ideal — Kelembapan tanah optimal untuk penanaman."
+            return ("🌱 Masa Tanam Ideal",
+                    "Kondisi tanah sudah cukup baik. Anda bisa mulai menanam untuk mendapatkan hasil pertumbuhan yang optimal.")
         elif kategori == "Rendah":
-            return "Tunda Tanam — Tanah terlalu kering."
+            return ("⏳ Sebaiknya Menunda Tanam",
+                    "Tanah masih terlalu kering. Menunggu hujan atau melakukan pengairan akan membantu bibit tumbuh lebih baik.")
         elif kategori == "Tinggi":
-            return "Tunda Tanam — Risiko genangan tinggi."
-        else:
-            return "Evaluasi Kondisi Tanam."
+            return ("⏳ Sebaiknya Menunda Tanam",
+                    "Curah hujan cukup tinggi, berisiko genangan. Menunggu kondisi lebih stabil akan lebih aman.")
+        return ("ℹ️ Menunggu Kondisi Terbaik",
+                "Kondisi lahan masih perlu diamati sebelum memulai penanaman.")
 
-    # =========================
-    # FASE AWAL (0–30 HST)
-    # =========================
+    # ================= AWAL =================
     if 0 <= hst <= 30:
         if kategori == "Rendah":
-            return "Penyiraman Intensif — Tanah perlu kelembapan tambahan."
+            return ("💧 Pendampingan Penyiraman",
+                    "Tanaman masih muda dan membutuhkan tambahan air agar akar dapat berkembang dengan baik.")
         elif kategori == "Tinggi":
-            return "Perbaikan Drainase — Cegah genangan air."
-        else:
-            return "Pemantauan Awal — Kondisi pertumbuhan normal."
+            return ("🌧️ Perhatian Drainase",
+                    "Air cukup tinggi, pastikan tidak terjadi genangan agar akar tetap sehat.")
+        return ("🌱 Masa Pertumbuhan Awal",
+                "Tanaman sedang beradaptasi dengan lingkungan. Kondisi saat ini cukup baik.")
 
-    # =========================
-    # FASE VEGETATIF (31–90 HST)
-    # =========================
+    # ================= VEGETATIF =================
     if 31 <= hst <= 90:
         if kategori == "Sedang" and hst <= 60:
-            return "Pemupukan NPK Tahap 1 — Mendukung pertumbuhan vegetatif."
+            return ("🌿 Waktu Pemupukan Awal",
+                    "Nutrisi tambahan akan membantu tanaman tumbuh lebih kuat dan sehat.")
         elif kategori == "Rendah":
-            return "Mulsa / Pengairan — Cegah kekeringan."
+            return ("💧 Dukungan Air & Mulsa",
+                    "Tanaman membutuhkan kelembapan agar tidak mengalami stres kekeringan.")
         elif kategori == "Tinggi":
-            return "Penyiangan Gulma — Hujan tinggi memicu gulma."
-        else:
-            return "Pemantauan Vegetatif — Pertumbuhan stabil."
+            return ("🌿 Pengendalian Gulma",
+                    "Pertumbuhan gulma lebih cepat saat hujan tinggi, perlu perhatian tambahan.")
+        return ("🌱 Pertumbuhan Vegetatif Stabil",
+                "Tanaman sedang tumbuh dengan baik dan tidak membutuhkan tindakan khusus.")
 
-    # =========================
-    # FASE PEMBENTUKAN UMBI (91–180 HST)
-    # =========================
+    # ================= UMBI =================
     if 91 <= hst <= 180:
         if kategori == "Sedang" and hst <= 150:
-            return "Pemupukan Tahap 2 (Tinggi K) — Fokus pembesaran umbi."
+            return ("🌿 Pemupukan Lanjutan",
+                    "Nutrisi tambahan membantu pembentukan umbi yang lebih optimal.")
         elif kategori == "Rendah":
-            return "Kritikal — Perlu pengairan tambahan."
+            return ("💧 Perhatian Kelembapan",
+                    "Tanah terlalu kering dapat menghambat pembentukan umbi.")
         elif kategori == "Tinggi":
-            return "Pemantauan Drainase — Hindari kelebihan air."
-        else:
-            return "Pemantauan Umbi — Kondisi stabil."
+            return ("🌧️ Pengawasan Drainase",
+                    "Kelebihan air bisa mengganggu perkembangan umbi.")
+        return ("🌾 Masa Pembentukan Umbi",
+                "Tanaman sedang fokus membentuk umbi. Kondisi relatif stabil.")
 
-    # =========================
-    # FASE PANEN (>180 HST)
-    # =========================
+    # ================= PANEN =================
     if hst > 180:
         if hst > 240 and kategori == "Rendah":
-            return "Waktu Panen Ideal — Kadar pati maksimal."
+            return ("🌾 Waktu Panen Terbaik",
+                    "Umbi sudah matang optimal dan siap dipanen dengan hasil maksimal.")
         elif kategori == "Tinggi":
-            return "Tunda Panen — Risiko kualitas turun."
-        else:
-            return "Siap Panen — Evaluasi kondisi umbi."
+            return ("⏳ Pertimbangkan Menunda Panen",
+                    "Kondisi masih lembap, menunggu waktu lebih kering dapat menjaga kualitas hasil.")
+        return ("🌾 Siap Panen",
+                "Tanaman sudah berada pada fase panen. Silakan evaluasi kondisi lapangan.")
 
-    return "Pemantauan Rutin."
-
-
-# =========================
-# 3. LABEL SINGKAT (FIXED)
-# =========================
-def label_singkat(aktivitas):
-
-    if not aktivitas:
-        return "Pemantauan"
-
-    a = aktivitas.lower()
-
-    if "tanam" in a:
-        return "Penanaman"
-
-    if "pupuk" in a:
-        return "Pemupukan"
-
-    if "siram" in a:
-        return "Penyiraman"
-
-    if "drainase" in a:
-        return "Penyiraman"
-
-    if "gulma" in a:
-        return "Pembersihan Gulma"
-
-    if "panen" in a:
-        return "Pemanenan"
-
-    if "mulsa" in a:
-        return "Pemeliharaan"
-
-    if "pemantauan" in a:
-        return "Pemantauan"
-
-    return "Pemantauan"
+    return ("ℹ️ Pemantauan Rutin",
+            "Tanaman dalam kondisi normal. Tetap lakukan pengamatan berkala.")
