@@ -4,27 +4,22 @@ def render_day_button(col, day, label, color, key, selected=False):
 
     border = "3px solid black" if selected else "1px solid #ddd"
 
-    btn_html = f"""
-    <div style="
-        height:100px;
-        border-radius:10px;
-        border:{border};
-        background-color:{color};
-        display:flex;
-        flex-direction:column;
-        justify-content:center;
-        align-items:center;
-        color:white;
-        font-weight:bold;
-    ">
-        <div style="font-size:18px">{day}</div>
-        <div style="font-size:10px">{label}</div>
-    </div>
-    """
+    st.markdown(f"""
+    <style>
+    div[data-testid="stButton"] > button {{
+        height: 100px;
+        border-radius: 10px;
+        border: {border};
+        background-color: {color} !important;
+        color: white;
+        font-weight: bold;
+        white-space: pre-line;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
 
-    # 🔥 INI YANG PENTING
     return col.button(
-        btn_html,
+        f"{day}\n{label}",
         key=key,
         use_container_width=True
     )
