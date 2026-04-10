@@ -44,7 +44,7 @@ load_css()
 col1, col2 = st.columns([3,1])
 
 with col1:
-    selected_day = render_calendar(
+    selected_day, labels, ranges = render_calendar(
         st.session_state.view_date,
         tgl_tanam,
         forecast_30
