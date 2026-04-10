@@ -172,7 +172,7 @@ with col2:
         f"**Prediksi Hujan:** {hujan_val:.2f} mm"
     )
 
-    st.success(f"**Rekomendasi Fase:**\n{fase}**\n{detail}"")
+    st.success(f"**Rekomendasi Fase:**\n{fase}**\n{detail}")
 
     st.caption("⚠️ Aktivitas menunjukkan rentang waktu optimal, bukan harus dilakukan setiap hari.")
 
