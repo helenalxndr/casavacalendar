@@ -35,7 +35,7 @@ def rbs_singkong_final(hujan_mm, hst):
 
     if 31 <= hst <= 90:
 
-        if kategori == "Normal" and hst <= 60:
+        if kategori == "Normal" and 31<= hst <= 60:
             return "Pemupukan NPK Tahap 1 — Nutrisi diserap optimal saat air cukup."
 
         if kategori == "Rendah":
@@ -71,21 +71,76 @@ def rbs_singkong_final(hujan_mm, hst):
 
     return "Pemantauan Rutin — Lanjutkan observasi lapangan."
 
+def kategori_hujan(hujan_mm):
+    if hujan_mm is None or np.isnan(hujan_mm):
+        return "Tidak Diketahui"
+    if hujan_mm < 5:
+        return "Rendah"
+    elif hujan_mm <= 15:
+        return "Sedang"
+    return "Tinggi"
+
+
+def rbs_singkong_final(hujan_mm, hst):
+
+    kategori = kategori_hujan(hujan_mm)
+
+    if hst < 0:
+        if kategori == "Sedang":
+            return "Waktu Tanam Ideal — Kelembapan cukup untuk memulai penanaman."
+        elif kategori == "Rendah":
+            return "Tunda Tanam — Tanah terlalu kering, risiko gagal tumbuh tinggi."
+        elif kategori == "Tinggi":
+            return "Tunda Tanam — Risiko genangan dan busuk batang tinggi."
+        return "Menunggu Kondisi Tanam — Evaluasi kelembapan tanah."
+
+    elif 0 <= hst <= 30:
+        if kategori == "Rendah":
+            return "Penyiraman Intensif — Tanah harus lembap agar tunas muncul."
+        elif kategori == "Tinggi":
+            return "Perbaikan Drainase — Hindari genangan, cegah busuk bibit."
+        return "Pemantauan Awal — Kelembapan cukup untuk pertumbuhan awal."
+
+    elif 31 <= hst <= 90:
+        if kategori == "Sedang" and 31 <= hst <= 60:
+            return "Pemupukan NPK Tahap 1 — Nutrisi diserap optimal saat air cukup."
+        elif kategori == "Rendah":
+            return "Mulsa / Pengairan — Cegah tanaman kerdil akibat kekeringan."
+        elif kategori == "Tinggi":
+            return "Penyiangan Gulma — Hujan tinggi memicu pertumbuhan gulma."
+        return "Pemantauan Vegetatif — Pertumbuhan berlangsung normal."
+
+    elif 91 <= hst <= 180:
+        if kategori == "Sedang" and 91 <= hst <= 150:
+            return "Pemupukan Tahap 2 (Tinggi K) — Fokus pembesaran umbi."
+        elif kategori == "Rendah":
+            return "Kritikal! Harus Diairi — Kekeringan menurunkan hasil umbi drastis."
+        elif kategori == "Tinggi":
+            return "Pemantauan Drainase — Hindari kelebihan air di fase umbi."
+        return "Pemantauan Umbi — Kondisi relatif stabil."
+
+    elif hst > 180:
+        if hst > 240 and kategori == "Rendah":
+            return "Waktu Panen Ideal — Kadar pati maksimal & tanah mudah digali."
+        elif kategori == "Tinggi":
+            return "Tunda Panen — Kadar pati turun akibat pertumbuhan vegetatif ulang."
+        return "Siap Panen — Evaluasi ukuran dan kualitas umbi."
+
+    return "Pemantauan Rutin — Lanjutkan observasi lapangan."
+
+
 def label_singkat(aktivitas):
+    aktivitas = aktivitas.lower()
 
-    if "Tanam" in aktivitas:
+    if "tanam" in aktivitas:
         return "Penanaman"
-
-    if "Pemupukan" in aktivitas:
+    if "pupuk" in aktivitas:
         return "Pemupukan"
-
-    if "Penyiraman" in aktivitas:
+    if "siram" in aktivitas:
         return "Penyiraman"
-
-    if "Gulma" in aktivitas:
+    if "gulma" in aktivitas:
         return "Pembersihan Gulma"
-
-    if "Panen" in aktivitas:
+    if "panen" in aktivitas:
         return "Pemanenan"
 
     return "Pemantauan"
