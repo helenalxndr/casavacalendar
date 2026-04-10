@@ -128,8 +128,10 @@ with col1:
                 hujan_val = forecast_30[idx]
 
                 # RBS
-                rekom_full = rbs_singkong_final(hujan_val, hst)
-                label_txt = label_singkat(rekom_full)
+                fase, detail = rbs_singkong_final(hujan_val, hst)
+                
+                rekom_full = detail
+                label_txt = fase
 
                 # Warna aktivitas
                 color = get_color(label_txt)
@@ -162,7 +164,7 @@ with col2:
     idx = get_forecast_index(active_dt, start_pred_date, len(forecast_30))
     hujan_val = forecast_30[idx]
 
-    rekom = rbs_singkong_final(hujan_val, hst)
+    fase, detail= rbs_singkong_final(hujan_val, hst)
 
     st.info(
         f"**Tanggal:** {active_dt.strftime('%d %B %Y')}\n\n"
@@ -170,7 +172,7 @@ with col2:
         f"**Prediksi Hujan:** {hujan_val:.2f} mm"
     )
 
-    st.success(f"**Rekomendasi Fase:**\n{rekom}")
+    st.success(f"**Rekomendasi Fase:**\n{fase}**\n{detail}"")
 
     st.caption("⚠️ Aktivitas menunjukkan rentang waktu optimal, bukan harus dilakukan setiap hari.")
 
