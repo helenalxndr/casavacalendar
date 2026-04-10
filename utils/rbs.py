@@ -1,3 +1,26 @@
+import numpy as np
+
+
+# =========================
+# FUNCTION INI HARUS ADA (WAJIB)
+# =========================
+def kategori_hujan(hujan_mm):
+    try:
+        if hujan_mm is None or np.isnan(float(hujan_mm)):
+            return "Tidak Diketahui"
+    except:
+        return "Tidak Diketahui"
+
+    hujan_mm = float(hujan_mm)
+
+    if hujan_mm < 5:
+        return "Rendah"
+    elif hujan_mm <= 15:
+        return "Sedang"
+    else:
+        return "Tinggi"
+
+
 def rbs_singkong_final(hujan_mm, hst):
 
     kategori = kategori_hujan(hujan_mm)
