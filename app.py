@@ -12,6 +12,26 @@ from utils.rbs import rbs_singkong_final, label_singkat, kategori_hujan
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
 # =========================
+# CSS GLOBAL
+# =========================
+st.markdown("""
+<style>
+div[data-testid="stButton"] button {
+    height: 100px;
+    width: 100%;
+    border-radius: 10px;
+    border: 2px solid #ddd;
+    font-weight: bold;
+    white-space: pre-line;
+}
+
+div[data-testid="stButton"] button:hover {
+    transform: scale(1.03);
+}
+</style>
+""", unsafe_allow_html=True)
+
+# =========================
 # LOAD DATA
 # =========================
 try:
@@ -23,7 +43,7 @@ except Exception as e:
     st.stop()
 
 # =========================
-# SESSION STATE
+# SESSION
 # =========================
 if "view_date" not in st.session_state:
     st.session_state.view_date = date.today().replace(day=1)
@@ -39,12 +59,10 @@ st.sidebar.title("⚙️ Pengaturan")
 kec_list = sorted(data["kecamatan"].unique())
 sel_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kec_list)
 
-tgl_tanam = st.sidebar.date_input(
-    "Tanggal Tanam", value=date.today()
-)
+tgl_tanam = st.sidebar.date_input("Tanggal Tanam", value=date.today())
 
 # =========================
-# PREP DATA
+# DATA PREP
 # =========================
 kec_id = encoder.transform([sel_kecamatan])[0]
 df_kec = data[data["kecamatan"] == sel_kecamatan].copy()
@@ -63,14 +81,12 @@ forecast_30 = recursive_forecast(
     days=31
 )
 
-# Hindari nilai negatif
 forecast_30 = np.clip(forecast_30, 0, 300)
 
 # =========================
-# WARNA AKTIVITAS
+# WARNA
 # =========================
 def warna_aktivitas(label):
-
     if label == "Penanaman":
         return "#22c55e"
     if label == "Pemupukan":
@@ -83,7 +99,6 @@ def warna_aktivitas(label):
         return "#f97316"
     if label == "Tunda Tanam":
         return "#ef4444"
-
     return "#9ca3af"
 
 # =========================
@@ -93,7 +108,7 @@ col1, col2 = st.columns([3, 1])
 
 with col1:
 
-    # NAVIGASI BULAN
+    # NAVIGASI
     n1, n2, n3 = st.columns([1, 2, 1])
 
     with n1:
@@ -113,7 +128,7 @@ with col1:
             st.session_state.view_date += relativedelta(months=1)
             st.rerun()
 
-    # HEADER HARI
+    # HEADER
     headers = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
     cols = st.columns(7)
     for i, h in enumerate(headers):
@@ -133,7 +148,7 @@ with col1:
             curr_dt = date(cv.year, cv.month, day)
             hst = (curr_dt - tgl_tanam).days
 
-            idx = min(max(0, (curr_dt - tgl_tanam).days), len(forecast_30) - 1)
+            idx = min(max(0, hst), len(forecast_30) - 1)
             hujan_val = forecast_30[idx]
 
             rekom = rbs_singkong_final(hujan_val, hst)
@@ -141,47 +156,41 @@ with col1:
 
             warna = warna_aktivitas(label)
 
-            # BUTTON CLICK AREA
-            if w_cols[i].button(" ", key=f"day_{cv.month}_{day}"):
+            # BUTTON (FULL BOX CLICKABLE)
+            button_text = f"{day}\n{label}"
+
+            if w_cols[i].button(
+                button_text,
+                key=f"day_{cv.month}_{day}",
+                use_container_width=True
+            ):
                 st.session_state.selected_day = day
                 st.rerun()
 
-            # BOX VISUAL
-            w_cols[i].markdown(
-                f"""
-                <div style="
-                    height:100px;
-                    border-radius:10px;
-                    border:2px solid {warna};
-                    background-color:{warna}20;
-                    display:flex;
-                    flex-direction:column;
-                    align-items:center;
-                    justify-content:center;
-                    text-align:center;
-                ">
-                    <div style="font-size:18px;font-weight:bold;">{day}</div>
-                    <div style="font-size:10px;">{label}</div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            # STYLE PER BUTTON
+            st.markdown(f"""
+            <style>
+            div[data-testid="stButton"] button[key="day_{cv.month}_{day}"] {{
+                background-color: {warna}20 !important;
+                border: 2px solid {warna} !important;
+                color: black !important;
+            }}
+            </style>
+            """, unsafe_allow_html=True)
 
-    # =========================
     # LEGENDA
-    # =========================
     st.markdown("### 🎨 Keterangan Warna")
     st.markdown("""
-    - 🟢 Penanaman → Waktu optimal tanam (range)
-    - 🔵 Pemupukan → Rentang ideal pemupukan
-    - 🔷 Penyiraman → Perlu tambahan air
+    - 🟢 Penanaman → Waktu optimal (range)
+    - 🔵 Pemupukan → Rentang pemupukan
+    - 🔷 Penyiraman → Tambahan air
     - 🟡 Penyiangan → Risiko gulma
-    - 🟠 Panen → Waktu panen terbaik
+    - 🟠 Panen → Waktu panen
     - 🔴 Tunda → Tidak disarankan
     """)
 
 # =========================
-# DETAIL PANEL
+# DETAIL
 # =========================
 with col2:
     st.markdown("### 📋 Detail Hari")
@@ -203,7 +212,6 @@ with col2:
     st.info(
         f"""
         **Tanggal:** {active_dt.strftime('%d %B %Y')}
-
         **HST:** {hst_active} hari  
         **Curah Hujan:** {hujan:.2f} mm  
         **Kategori:** {kategori}
