@@ -14,6 +14,17 @@ from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
+st.markdown("""
+<style>
+button[kind="secondary"] {
+    background-color: white !important;
+    color: black !important;
+    border: 1px solid #ddd !important;
+    font-weight: bold !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # =========================
 # 1. LOAD DATA
 # =========================
@@ -87,7 +98,7 @@ with col1:
     n1, n2, n3 = st.columns([1, 2, 1])
 
     with n1:
-        if st.button("❮", use_container_width=True):
+        if st.button("❮", key="prev_btn", use_container_width=True):
             st.session_state.view_date -= relativedelta(months=1)
             st.rerun()
 
@@ -99,7 +110,7 @@ with col1:
         )
 
     with n3:
-        if st.button("❯", use_container_width=True):
+        if st.button("❯", key="next_btn", use_container_width=True):
             st.session_state.view_date += relativedelta(months=1)
             st.rerun()
 
