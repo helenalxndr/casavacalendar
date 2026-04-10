@@ -16,29 +16,35 @@ def get_color(label):
 
     label = label.lower()
 
-    # 🌱 TANAM / PENANAMAN
+def get_color(label):
+
+    if not label:
+        return "#9ca3af"
+
+    label = label.lower()
+
+    # TANAM
     if "tanam" in label:
         return "#22c55e"
 
-    # 💧 PENYIRAMAN / AIR / KEKERINGAN
-    if "siram" in label or "air" in label or "kelembapan" in label:
+    # PEMUPUKAN (INI FIX UTAMA)
+    if "pupuk" in label or "nutrisi" in label:
+        return "#facc15"
+
+    # PENYIRAMAN / AIR
+    if "sir" in label or "air" in label or "kelembapan" in label:
         return "#3b82f6"
 
-    # 🌿 PEMUPUKAN
-    if "pupuk" in label or "nutrisi" in label:
-        return "#f59e0b"
+    # GULMA
+    if "gulma" in label or "penyiang" in label:
+        return "#a855f7"
 
-    # 🌿 PENYIANGAN / GULMA
-    if "gulma" in label or "penyiangan" in label:
-        return "#8b5cf6"
-
-    # 🌾 PANEN
+    # PANEN
     if "panen" in label:
         return "#ef4444"
 
-    # 🌧️ DRAINASE / GENANGAN
+    # DRAINASE
     if "drainase" in label or "genangan" in label:
         return "#06b6d4"
 
-    # 🌱 DEFAULT / PEMANTAUAN
     return "#9ca3af"
