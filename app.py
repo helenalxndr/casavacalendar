@@ -128,19 +128,13 @@ with col1:
                 hujan_val = forecast_30[idx]
 
                 # RBS
-                fase, detail = rbs_singkong_final(hujan_val, hst)
+                fase, detail, kode = rbs_singkong_final(hujan_val, hst)
                 
                 rekom_full = detail
                 label_txt = fase
 
                 # Warna aktivitas
-                label_clean = label_txt.lower()
-                
-                # buang emoji
-                for e in ["🌿", "🌱", "🌾", "🌧️", "💧", "⏳", "ℹ️"]:
-                    label_clean = label_clean.replace(e, "").strip()
-                
-                color = get_color(label_clean)
+                color = get_color(kode)
 
                 # Render tombol
                 if render_day_button(
