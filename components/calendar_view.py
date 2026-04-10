@@ -23,7 +23,7 @@ def render_calendar(cv, tgl_tanam, forecast_30):
     selected_day = None
 
     # =========================
-    # NAVIGASI BULAN
+    # NAVIGASI
     # =========================
     n1, n2, n3 = st.columns([1,2,1])
 
@@ -50,14 +50,17 @@ def render_calendar(cv, tgl_tanam, forecast_30):
         h_cols[i].markdown(f"<p style='text-align:center;font-weight:bold'>{h}</p>", unsafe_allow_html=True)
 
     # =========================
-    # PREPARE CSS DINAMIS
+    # GRID KALENDER (OVERLAY FIX)
     # =========================
     cal_matrix = calendar.monthcalendar(cv.year, cv.month)
-    css_rules = []
 
     for week in cal_matrix:
-        for day in week:
+        cols = st.columns(7)
+
+        for i, day in enumerate(week):
+
             if day == 0:
+                cols[i].write("")
                 continue
 
             curr_dt = date(cv.year, cv.month, day)
@@ -70,38 +73,31 @@ def render_calendar(cv, tgl_tanam, forecast_30):
 
             bg, border = get_color(label)
 
-            key = f"day_{cv.month}_{day}"
+            with cols[i]:
+                # 🔵 BOX WARNA (BACKGROUND)
+                st.markdown(f"""
+                <div style="
+                    position:relative;
+                    height:105px;
+                    border-radius:12px;
+                    border:2px solid {border};
+                    background:{bg};
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:20px;
+                    font-weight:bold;
+                ">
+                    {day}
+                </div>
+                """, unsafe_allow_html=True)
 
-            css_rules.append(f"""
-            button[key="{key}"] {{
-                background-color: {bg} !important;
-                border: 2px solid {border} !important;
-                height: 105px !important;
-                width: 100% !important;
-                border-radius: 10px !important;
-                font-size: 18px !important;
-                font-weight: bold !important;
-                color: black !important;
-            }}
-            """)
-
-    # INJECT CSS
-    st.markdown(f"<style>{''.join(css_rules)}</style>", unsafe_allow_html=True)
-
-    # =========================
-    # GRID KALENDER (FULL CLICKABLE)
-    # =========================
-    for week in cal_matrix:
-        cols = st.columns(7)
-
-        for i, day in enumerate(week):
-            if day == 0:
-                cols[i].write("")
-                continue
-
-            key = f"day_{cv.month}_{day}"
-
-            if cols[i].button(str(day), key=key, use_container_width=True):
-                selected_day = day
+                # 🔴 BUTTON TRANSPARAN (OVERLAY)
+                if st.button(
+                    " ",
+                    key=f"day_{cv.month}_{day}",
+                    use_container_width=True
+                ):
+                    selected_day = day
 
     return selected_day
