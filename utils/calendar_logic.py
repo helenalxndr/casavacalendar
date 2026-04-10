@@ -10,12 +10,35 @@ def get_hst(curr_dt, tgl_tanam):
 
 
 def get_color(label):
-    color_map = {
-        "Penanaman": "#22c55e",       # hijau
-        "Penyiraman": "#3b82f6",      # biru
-        "Pemupukan": "#f59e0b",       # kuning
-        "Pembersihan Gulma": "#8b5cf6", # ungu
-        "Pemanenan": "#ef4444",       # merah
-        "Pemantauan": "#9ca3af"       # abu
-    }
-    return color_map.get(label, "#e5e7eb")
+
+    if not label:
+        return "#9ca3af"
+
+    label = label.lower()
+
+    # 🌱 TANAM / PENANAMAN
+    if "tanam" in label:
+        return "#22c55e"
+
+    # 💧 PENYIRAMAN / AIR / KEKERINGAN
+    if "siram" in label or "air" in label or "kelembapan" in label:
+        return "#3b82f6"
+
+    # 🌿 PEMUPUKAN
+    if "pupuk" in label or "nutrisi" in label:
+        return "#f59e0b"
+
+    # 🌿 PENYIANGAN / GULMA
+    if "gulma" in label or "penyiangan" in label:
+        return "#8b5cf6"
+
+    # 🌾 PANEN
+    if "panen" in label:
+        return "#ef4444"
+
+    # 🌧️ DRAINASE / GENANGAN
+    if "drainase" in label or "genangan" in label:
+        return "#06b6d4"
+
+    # 🌱 DEFAULT / PEMANTAUAN
+    return "#9ca3af"
