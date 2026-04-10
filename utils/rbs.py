@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def kategori_hujan(hujan_mm):
     if hujan_mm < 5:
         return "Rendah"
