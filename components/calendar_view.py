@@ -1,5 +1,6 @@
 import streamlit as st
 import calendar
+import pandas as pd
 from datetime import date
 from utils.rbs import rbs_singkong_final, label_singkat
 
