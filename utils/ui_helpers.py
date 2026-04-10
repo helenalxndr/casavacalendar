@@ -7,7 +7,7 @@ def render_day_button(col, day, label, color, key, selected=False):
     st.markdown(f"""
     <style>
     div[data-testid="stButton"] > button {{
-        height: 100px;
+        height: 60px;
         border-radius: 10px;
         border: {border};
         background-color: {color} !important;
