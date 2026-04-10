@@ -134,6 +134,7 @@ with col1:
                 label_txt = fase
 
                 # Warna aktivitas
+                label_txt = label_txt.replace("🌿", "").replace("🌱", "").replace("🌾", "").replace("🌧️", "").strip()
                 color = get_color(label_txt)
 
                 # Render tombol
