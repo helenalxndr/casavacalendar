@@ -1,0 +1,45 @@
+/* style.css */
+
+/* Menghilangkan padding bawaan kolom agar button rapat */
+[data-testid="column"] {
+    padding: 0px 2px !important;
+}
+
+/* Base styling untuk semua tombol kalender */
+.stButton > button {
+    height: 100px !important;
+    width: 100% !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    background-color: white !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* Efek Hover */
+.stButton > button:hover {
+    border-color: #a0aec0 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* WARNA FASE - Kita pakai selector kontainer pembungkus */
+.fase-tanam button { background-color: #C6F6D5 !important; border-color: #48BB78 !important; }
+.fase-siram button { background-color: #BEE3F8 !important; border-color: #4299E1 !important; }
+.fase-pupuk button { background-color: #FEF3C7 !important; border-color: #F6E05E !important; }
+.fase-panen button { background-color: #FED7D7 !important; border-color: #F56565 !important; }
+
+/* Styling teks di dalam button */
+.stButton > button p {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    margin: 0 !important;
+    color: #2d3748 !important;
+}
+
+.stButton > button div {
+    font-size: 9px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    color: #4a5568 !important;
+}
