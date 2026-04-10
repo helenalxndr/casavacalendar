@@ -134,8 +134,13 @@ with col1:
                 label_txt = fase
 
                 # Warna aktivitas
-                label_txt = label_txt.replace("🌿", "").replace("🌱", "").replace("🌾", "").replace("🌧️", "").strip()
-                color = get_color(label_txt)
+                label_clean = label_txt.lower()
+                
+                # buang emoji
+                for e in ["🌿", "🌱", "🌾", "🌧️", "💧", "⏳", "ℹ️"]:
+                    label_clean = label_clean.replace(e, "").strip()
+                
+                color = get_color(label_clean)
 
                 # Render tombol
                 if render_day_button(
