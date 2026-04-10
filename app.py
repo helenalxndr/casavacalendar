@@ -193,5 +193,3 @@ with col2:
     🔴 Pemanenan  
     ⚪ Pemantauan  
     """)
-
-st.write(label_txt)
