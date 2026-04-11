@@ -138,34 +138,37 @@ for week in cal_matrix:
     w_cols = st.columns(7)
     
     # 3. Mulai loop untuk setiap hari (kolom) dalam minggu tersebut
-    for i, day in enumerate(week): # <--- Baris yang error tadi
-        if day == 0:
-            w_cols[i].write("")
-        else:
-            # Logika perhitungan HST, RBS, dan Warna di sini
-            curr_dt = date(cv.year, cv.month, day)
-            hst = get_hst(curr_dt, tgl_tanam)
-            
-            # Ambil data forecast (pastikan forecast_30 sudah ada di atas)
-            idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
-            hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
+# ... bagian awal loop kalender ...
 
-            # Jalankan RBS & Get Color
-            fase, detail, kode = rbs_singkong_final(hujan_val, hst)
-            target_color = get_color_by_code(kode)
+for i, day in enumerate(week):
+    if day == 0:
+        w_cols[i].write("")
+    else:
+        # 1. Hitung parameter tanggal
+        curr_dt = date(cv.year, cv.month, day)
+        hst = get_hst(curr_dt, tgl_tanam)
+        idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
+        hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
 
-            # Render Button
-            if render_day_button(
-                col=w_cols[i],
-                day=day,
-                label=label_singkat((fase, detail, kode)),
-                color=target_color,
-                key=f"btn_{cv.month}_{day}",
-                selected=(day == st.session_state.selected_day)
-            ):
-                st.session_state.selected_day = day
-                st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+        # 2. Jalankan Logika RBS
+        # fase: teks panjang, detail: deskripsi, kode: label singkat (tanam/air/dll)
+        fase, detail, kode = rbs_singkong_final(hujan_val, hst)
+        
+        # 3. Dapatkan Warna Berdasarkan Kode
+        target_color = get_color_by_code(kode)
+        
+        # 4. Render Tombol menggunakan 'kode' sebagai label
+        # .title() digunakan agar "tanam" menjadi "Tanam"
+        if render_day_button(
+            col=w_cols[i],
+            day=day,
+            label=kode.title(), 
+            color=target_color, 
+            key=f"btn_{cv.month}_{day}",
+            selected=(day == st.session_state.selected_day)
+        ):
+            st.session_state.selected_day = day
+            st.rerun()
 
 # =========================
 # 6. DETAIL PANEL
