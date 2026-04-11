@@ -21,3 +21,19 @@ def render_day_button(col, day, label, color, key, selected=False):
             key=key,
             use_container_width=True
         )
+
+ def get_color_by_code(kode):
+        """
+        Memetakan kode aktivitas dari RBS ke warna HEX untuk UI kalender.
+        """
+        mapping = {
+            "tanam":   "#22c55e", # Hijau (Masa Tanam)
+            "tunda":   "#f97316", # Oranye (Kondisi Tidak Ideal)
+            "air":     "#3b82f6", # Biru (Penyiraman/Drainase)
+            "pupuk":   "#eab308", # Kuning (Pemupukan)
+            "gulma":   "#a855f7", # Ungu (Penyiangan)
+            "panen":   "#ef4444", # Merah (Panen)
+            "monitor": "#9ca3af", # Abu-abu (Pemantauan Rutin)
+        }
+        # Default ke abu-abu jika kode tidak terdefinisi
+        return mapping.get(kode, "#9ca3af")
