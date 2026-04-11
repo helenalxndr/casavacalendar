@@ -130,45 +130,45 @@ with col1:
 
     # Grid kalender
     # 1. Buat matriks kalender berdasarkan bulan dan tahun yang sedang dilihat
+# Grid kalender
 cal_matrix = calendar.monthcalendar(cv.year, cv.month)
 
-# 2. Mulai loop untuk setiap minggu (baris) dalam matriks
 for week in cal_matrix:
     st.markdown('<div class="calendar-row">', unsafe_allow_html=True)
     w_cols = st.columns(7)
-    
-    # 3. Mulai loop untuk setiap hari (kolom) dalam minggu tersebut
-# ... bagian awal loop kalender ...
+    for i, day in enumerate(week):
+        if day == 0:
+            w_cols[i].write("")
+        else:
+            # 1. Hitung HST & Forecast
+            curr_dt = date(cv.year, cv.month, day)
+            hst = (curr_dt - tgl_tanam).days # Pastikan tgl_tanam ada di sidebar
+            
+            # 2. Ambil data curah hujan
+            idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
+            hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
 
-for i, day in enumerate(week):
-    if day == 0:
-        w_cols[i].write("")
-    else:
-        # 1. Hitung parameter tanggal
-        curr_dt = date(cv.year, cv.month, day)
-        hst = get_hst(curr_dt, tgl_tanam)
-        idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
-        hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
+            # 3. Jalankan RBS (PENTING: Ambil 3 output)
+            fase_txt, detail_txt, kode_rbs = rbs_singkong_final(hujan_val, hst)
+            
+            # 4. Ambil Warna (Gunakan kode_rbs)
+            target_color = get_color_by_code(kode_rbs)
 
-        # 2. Jalankan Logika RBS
-        # fase: teks panjang, detail: deskripsi, kode: label singkat (tanam/air/dll)
-        fase, detail, kode = rbs_singkong_final(hujan_val, hst)
-        
-        # 3. Dapatkan Warna Berdasarkan Kode
-        target_color = get_color_by_code(kode)
-        
-        # 4. Render Tombol menggunakan 'kode' sebagai label
-        # .title() digunakan agar "tanam" menjadi "Tanam"
-        if render_day_button(
-            col=w_cols[i],
-            day=day,
-            label=kode.title(), 
-            color=target_color, 
-            key=f"btn_{cv.month}_{day}",
-            selected=(day == st.session_state.selected_day)
-        ):
-            st.session_state.selected_day = day
-            st.rerun()
+            # 5. Render Tombol (Pastikan label tidak kosong)
+            # Jika label kosong, tombol terkadang tidak muncul di Streamlit
+            display_label = kode_rbs.title() if kode_rbs else "Monitor"
+
+            if render_day_button(
+                col=w_cols[i],
+                day=day,
+                label=display_label,
+                color=target_color,
+                key=f"btn_{cv.month}_{day}",
+                selected=(day == st.session_state.selected_day)
+            ):
+                st.session_state.selected_day = day
+                st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================
 # 6. DETAIL PANEL
