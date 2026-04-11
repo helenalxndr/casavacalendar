@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import calendar
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -10,31 +9,34 @@ from utils.loader import load_all
 from utils.forecast import recursive_forecast
 from utils.rbs import rbs_singkong_final
 from utils.calendar_logic import get_forecast_index, get_hst, get_color
-from utils.ui_helpers import render_day_button, get_color_by_code
+from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
+# =========================
+# STYLE (GLOBAL RAPI)
+# =========================
 st.markdown("""
 <style>
+/* jarak antar minggu kalender */
 .calendar-row {
-    margin-bottom: 8px;  /* ini jarak antar baris tanggal */
+    margin-bottom: 8px;
 }
 
-/* kasih gap antar column juga */
+/* gap antar kolom kalender */
 div[data-testid="stHorizontalBlock"] {
-    gap: 8px;
+    gap: 6px;
 }
 
-/* opsional: rapikan column spacing */
+/* rapikan padding column */
 div[data-testid="column"] {
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding: 2px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # =========================
-# 1. LOAD DATA
+# LOAD DATA
 # =========================
 try:
     model, encoder, scaler, data = load_all()
@@ -44,7 +46,7 @@ except Exception as e:
     st.stop()
 
 # =========================
-# 2. SESSION STATE
+# SESSION STATE
 # =========================
 if "view_date" not in st.session_state:
     st.session_state.view_date = date.today().replace(day=1)
@@ -53,17 +55,14 @@ if "selected_day" not in st.session_state:
     st.session_state.selected_day = date.today().day
 
 # =========================
-# 3. SIDEBAR
+# SIDEBAR
 # =========================
 st.sidebar.title("⚙️ Pengaturan")
 
 kec_list = sorted(data["kecamatan"].unique())
 sel_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kec_list)
 
-tgl_tanam = st.sidebar.date_input(
-    "Tanggal Tanam",
-    value=date.today()
-)
+tgl_tanam = st.sidebar.date_input("Tanggal Tanam", value=date.today())
 
 # Encode kecamatan
 try:
@@ -72,7 +71,7 @@ except:
     st.error("Kecamatan tidak dikenali oleh model")
     st.stop()
 
-# Filter data kecamatan
+# Filter data
 df_kec = data[data["kecamatan"] == sel_kecamatan].copy().sort_values("tanggal")
 
 if len(df_kec) < 270:
@@ -93,16 +92,16 @@ forecast_30 = recursive_forecast(
 start_pred_date = df_kec["tanggal"].max().date()
 
 # =========================
-# 4. LAYOUT
+# LAYOUT
 # =========================
 col1, col2 = st.columns([3, 1])
 
 # =========================
-# 5. KALENDER
+# CALENDAR
 # =========================
 with col1:
 
-    # Navigasi bulan
+    # NAVIGASI BULAN
     n1, n2, n3 = st.columns([1, 2, 1])
 
     with n1:
@@ -122,56 +121,51 @@ with col1:
             st.session_state.view_date += relativedelta(months=1)
             st.rerun()
 
-    # Header hari
+    # HEADER HARI
     hari = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"]
     cols = st.columns(7)
     for i, h in enumerate(hari):
         cols[i].markdown(f"<center><b>{h}</b></center>", unsafe_allow_html=True)
 
-    # Grid kalender
-    # 1. Buat matriks kalender berdasarkan bulan dan tahun yang sedang dilihat
-# Grid kalender
-cal_matrix = calendar.monthcalendar(cv.year, cv.month)
+    # =========================
+    # GRID KALENDER (FIX UTAMA)
+    # =========================
+    cal_matrix = calendar.monthcalendar(cv.year, cv.month)
 
-for week in cal_matrix:
-    st.markdown('<div class="calendar-row">', unsafe_allow_html=True)
-    w_cols = st.columns(7)
-    for i, day in enumerate(week):
-        if day == 0:
-            w_cols[i].write("")
-        else:
-            # 1. Hitung HST & Forecast
+    for week in cal_matrix:
+
+        w_cols = st.columns(7)
+
+        for i, day in enumerate(week):
+
+            if day == 0:
+                w_cols[i].write("")
+                continue
+
             curr_dt = date(cv.year, cv.month, day)
-            hst = (curr_dt - tgl_tanam).days # Pastikan tgl_tanam ada di sidebar
-            
-            # 2. Ambil data curah hujan
+
+            hst = get_hst(curr_dt, tgl_tanam)
             idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
-            hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
+            hujan_val = forecast_30[idx]
 
-            # 3. Jalankan RBS (PENTING: Ambil 3 output)
-            fase_txt, detail_txt, kode_rbs = rbs_singkong_final(hujan_val, hst)
-            
-            # 4. Ambil Warna (Gunakan kode_rbs)
-            target_color = get_color_by_code(kode_rbs)
+            fase, detail, kode = rbs_singkong_final(hujan_val, hst)
 
-            # 5. Render Tombol (Pastikan label tidak kosong)
-            # Jika label kosong, tombol terkadang tidak muncul di Streamlit
-            display_label = kode_rbs.title() if kode_rbs else "Monitor"
+            label_txt = fase
+            color = get_color(kode)
 
             if render_day_button(
-                col=w_cols[i],
-                day=day,
-                label=display_label,
-                color=target_color,
-                key=f"btn_{cv.month}_{day}",
+                w_cols[i],
+                day,
+                label_txt,
+                color,
+                key=f"{cv.month}_{day}",
                 selected=(day == st.session_state.selected_day)
             ):
                 st.session_state.selected_day = day
                 st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # =========================
-# 6. DETAIL PANEL
+# DETAIL PANEL
 # =========================
 with col2:
 
@@ -184,9 +178,7 @@ with col2:
 
     hst = get_hst(active_dt, tgl_tanam)
     idx = get_forecast_index(active_dt, start_pred_date, len(forecast_30))
-    
-    # Proteksi index
-    hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
+    hujan_val = forecast_30[idx]
 
     fase, detail, kode = rbs_singkong_final(hujan_val, hst)
 
@@ -196,7 +188,7 @@ with col2:
         f"**Prediksi Hujan:** {hujan_val:.2f} mm"
     )
 
-    st.success(f"**Rekomendasi Fase:**\n\n{fase}\n\n{detail}")
+    st.success(f"**Rekomendasi Fase:**\n{fase}\n{detail}")
 
     st.caption("⚠️ Aktivitas menunjukkan rentang waktu optimal, bukan harus dilakukan setiap hari.")
 
@@ -204,16 +196,12 @@ with col2:
 
     st.line_chart(forecast_30)
 
-    # =========================
-    # LEGENDA WARNA
-    # =========================
     st.markdown("### 🎨 Keterangan Warna")
-
     st.markdown("""
-    - 🟢 Penanaman  
-    - 🔵 Penyiraman  
-    - 🟡 Pemupukan  
-    - 🟣 Penyiangan  
-    - 🔴 Pemanenan  
-    - ⚪ Pemantauan  
+    🟢 Penanaman  
+    🔵 Penyiraman  
+    🟡 Pemupukan  
+    🟣 Penyiangan  
+    🔴 Pemanenan  
+    ⚪ Pemantauan  
     """)
