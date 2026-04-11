@@ -10,7 +10,7 @@ from utils.loader import load_all
 from utils.forecast import recursive_forecast
 from utils.rbs import rbs_singkong_final
 from utils.calendar_logic import get_forecast_index, get_hst, get_color
-from utils.ui_helpers import render_day_button
+from utils.ui_helpers import render_day_button, get_color_by_code
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
@@ -131,41 +131,33 @@ with col1:
     # Grid kalender
     cal_matrix = calendar.monthcalendar(cv.year, cv.month)
 
-    for week in cal_matrix:
-        st.markdown('<div class="calendar-row">', unsafe_allow_html=True)
-        w_cols = st.columns(7)
-        for i, day in enumerate(week):
-            if day == 0:
-                w_cols[i].write("")
-            else:
-                curr_dt = date(cv.year, cv.month, day)
-                
-                # HST & forecast index
-                hst = get_hst(curr_dt, tgl_tanam)
-                idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
-                
-                # Ambil nilai hujan dari forecast (pake 0 jika di luar jangkauan forecast)
-                hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
-
-                # RBS
-                fase, detail, kode = rbs_singkong_final(hujan_val, hst)
-                label_txt = fase
-
-                # Warna aktivitas
-                color = get_color(kode)
-
-                # Render tombol
-                if render_day_button(
-                    w_cols[i],
-                    day,
-                    label_txt,
-                    color,
-                    key=f"{cv.month}_{day}",
-                    selected=(day == st.session_state.selected_day)
-                ):
-                    st.session_state.selected_day = day
-                    st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+    for i, day in enumerate(week):
+        if day == 0:
+            w_cols[i].write("")
+        else:
+            curr_dt = date(cv.year, cv.month, day)
+            hst = get_hst(curr_dt, tgl_tanam)
+            idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
+            hujan_val = forecast_30[idx] if idx < len(forecast_30) else 0
+    
+            # --- LANGKAH KRUSIAL ---
+            # 1. Jalankan RBS untuk mendapatkan fase dan KODE
+            fase, detail, kode = rbs_singkong_final(hujan_val, hst)
+            
+            # 2. Cari warna berdasarkan KODE tersebut
+            target_color = get_color_by_code(kode)
+    
+            # 3. Masukkan target_color ke dalam render_day_button
+            if render_day_button(
+                col=w_cols[i],
+                day=day,
+                label=label_singkat((fase, detail, kode)), # Pakai label singkat agar tidak penuh
+                color=hex_color,
+                key=f"btn_{cv.month}_{day}",
+                selected=(day == st.session_state.selected_day)
+            ):
+                st.session_state.selected_day = day
+                st.rerun()
 
 # =========================
 # 6. DETAIL PANEL
