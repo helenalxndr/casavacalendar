@@ -14,6 +14,20 @@ from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
+st.markdown("""
+<style>
+div[data-testid="stButton"] > button {
+    height: 100px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background-color: {color} !important;
+    color: white;
+    font-weight: bold;
+    white-space: pre-line;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # =========================
 # 1. LOAD DATA
 # =========================
