@@ -22,4 +22,9 @@ def render_day_button(col, day, label, color, key, selected=False):
     </div>
     """
 
-    return col.button(btn_html, key=key, use_container_width=True)
+    # 🔥 INI YANG PENTING
+    return col.button(
+        btn_html,
+        key=key,
+        use_container_width=True
+    )
