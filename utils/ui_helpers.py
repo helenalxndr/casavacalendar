@@ -1,25 +1,23 @@
 import streamlit as st
 
 def render_day_button(col, day, label, color, key, selected=False):
-
-    border = "3px solid black" if selected else "1px solid #ddd"
-
-    st.markdown(f"""
-    <style>
-    div[data-testid="stButton"] > button {{
-        height: 100px;
-        border-radius: 10px;
-        border: {border};
-        background-color: {color} !important;
-        color: white;
-        font-weight: bold;
-        white-space: pre-line;
-    }}
-    </style>
-    """, unsafe_allow_html=True)
-
-    return col.button(
-        f"{day}\n{label}",
-        key=key,
-        use_container_width=True
-    )
+    # Buat border jika terpilih
+    border_style = "border: 3px solid #000 !important;" if selected else "border: 1px solid #ddd !important;"
+    
+    # Gunakan container untuk menyuntikkan CSS spesifik ke button ini saja
+    # Kita menggunakan f-string untuk menargetkan key spesifik (Streamlit meng-hash key ini)
+    with col:
+        st.markdown(f"""
+        <style>
+        div[data-testid="stElementContainer"]:has(button[key="{key}"]) button {{
+            background-color: {color} !important;
+            {border_style}
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+        
+        return st.button(
+            f"{day}\n{label}",
+            key=key,
+            use_container_width=True
+        )
