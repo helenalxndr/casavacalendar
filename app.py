@@ -244,3 +244,5 @@ with col2:
     ⚪ Pemantauan  
     ⚫ Tunda  
     """)
+
+st.write("DEBUG KODE:", f"'{kode}'")
