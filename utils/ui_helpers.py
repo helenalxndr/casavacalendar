@@ -8,7 +8,7 @@ def render_day_button(col, day, label, color, key, selected=False):
     # VISUAL CUSTOM (HTML FULL CONTROL)
     col.markdown(f"""
     <div style="
-        margin-top: -80px;
+        margin-top: 30px;
         height: 95px;
         border-radius: 14px;
         border: {border};
