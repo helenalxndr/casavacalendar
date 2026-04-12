@@ -1,19 +1,18 @@
 def render_day_button(col, day, label, color, key, selected=False):
 
-    border = "3px solid #000" if selected else "1px solid #ddd"
-    shadow = "0 0 0 2px rgba(0,0,0,0.2)" if selected else "0 1px 3px rgba(0,0,0,0.1)"
+    border = "2px solid #000" if selected else "1px solid #ddd"
+    shadow = "0 4px 12px rgba(0,0,0,0.15)" if selected else "0 2px 6px rgba(0,0,0,0.08)"
 
     class_name = f"btn_{key}"
 
     col.markdown(f"""
     <style>
     .{class_name} button {{
-        height: 100px;
-        border-radius: 12px;
+        height: 95px;
+        border-radius: 14px;
         border: {border};
         background-color: {color} !important;
         color: white;
-        font-weight: 600;
 
         display: flex;
         flex-direction: column;
@@ -21,22 +20,38 @@ def render_day_button(col, day, label, color, key, selected=False):
         align-items: center;
 
         padding: 6px;
-        line-height: 1.2;
         box-shadow: {shadow};
-
         transition: all 0.2s ease;
     }}
 
     .{class_name} button:hover {{
-        transform: scale(1.05);
-        filter: brightness(1.1);
+        transform: translateY(-2px) scale(1.03);
+        filter: brightness(1.08);
+    }}
+
+    /* TANGGAL (BESAR & DI ATAS) */
+    .{class_name} .day-number {{
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
+    }}
+
+    /* LABEL (KECIL DI BAWAH) */
+    .{class_name} .day-label {{
+        font-size: 11px;
+        margin-top: 4px;
+        opacity: 0.9;
+        text-align: center;
     }}
     </style>
+
     <div class="{class_name}">
     """, unsafe_allow_html=True)
 
     clicked = col.button(
-        f"{day}\n{label}",
+        f"<div class='day-number'>{day}</div>"
+        f"<div class='day-label'>{label}</div>",
         key=key,
         use_container_width=True
     )
@@ -44,4 +59,3 @@ def render_day_button(col, day, label, color, key, selected=False):
     col.markdown("</div>", unsafe_allow_html=True)
 
     return clicked
-    
