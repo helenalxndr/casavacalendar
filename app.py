@@ -201,6 +201,7 @@ with col1:
                 ):
                     st.session_state.selected_day = day
                     st.rerun()
+
 # =========================
 # 6. DETAIL PANEL
 # =========================
@@ -242,23 +243,18 @@ with col2:
 
     st.success(f"**Rekomendasi:**\n{fase}.\n{detail}")
 
-                st.divider()
-                
-                    # --- PENAMBAHAN KETERANGAN CHART ---
-                    st.markdown("**📈 Proyeksi Curah Hujan 30 Hari Ke Depan**")
-                    
-                    # 1. Siapkan data dalam DataFrame
-                    chart_data = pd.DataFrame({
-                        "Intensitas Hujan (mm)": forecast_30  # Nama kolom ini akan jadi label sumbu Y
-                    })
-                    
-                    # 2. Beri nama pada index untuk label sumbu X
-                    chart_data.index.name = "Proyeksi Hari Ke-n"
-                
-                    # 3. Gunakan st.area_chart dengan DataFrame yang sudah berlabel
-                    # use_container_width memastikan chart responsif mengikuti lebar col2
-                    st.area_chart(
-                        chart_data, 
-                        color="#29b5e8", 
-                        use_container_width=True
-                    )
+    st.divider()
+
+    # --- CHART ---
+    st.markdown("**📈 Proyeksi Curah Hujan 30 Hari Ke Depan**")
+
+    chart_data = pd.DataFrame({
+        "Intensitas Hujan (mm)": forecast_30
+    })
+
+    chart_data.index.name = "Proyeksi Hari Ke-n"
+
+    st.area_chart(
+        chart_data,
+        use_container_width=True
+    )
