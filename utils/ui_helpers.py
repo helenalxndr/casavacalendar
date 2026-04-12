@@ -2,7 +2,6 @@ def render_day_button(col, day, label, color, key, selected=False):
 
     border = "3px solid black" if selected else "1px solid #ddd"
 
-    # unique class per tombol
     class_name = f"btn_{key}"
 
     col.markdown(f"""
@@ -20,7 +19,7 @@ def render_day_button(col, day, label, color, key, selected=False):
         justify-content: center;
         align-items: center;
 
-        white-space: normal !important;
+        white-space: pre-line !important;  /* 🔥 penting */
         text-align: center;
     }}
     </style>
@@ -28,7 +27,7 @@ def render_day_button(col, day, label, color, key, selected=False):
     """, unsafe_allow_html=True)
 
     clicked = col.button(
-        f"**{day}**\n{label}",
+        f"{day}\n{label}",   # 🔥 FIX DI SINI
         key=key,
         use_container_width=True
     )
