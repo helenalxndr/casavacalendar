@@ -1,12 +1,12 @@
-import streamlit as st
-
 def render_day_button(col, day, label, color, key, selected=False):
 
     border = "3px solid black" if selected else "1px solid #ddd"
 
-    st.markdown(f"""
+    button_id = f"btn_{key}"  # unique id
+
+    col.markdown(f"""
     <style>
-    div[data-testid="stButton"] > button {{
+    div[data-testid="stButton"] button[data-testid="{button_id}"] {{
         height: 100px;
         border-radius: 10px;
         border: {border};
@@ -20,6 +20,6 @@ def render_day_button(col, day, label, color, key, selected=False):
 
     return col.button(
         f"{day}\n{label}",
-        key=key,
+        key=button_id,
         use_container_width=True
     )
