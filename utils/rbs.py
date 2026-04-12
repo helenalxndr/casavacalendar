@@ -60,7 +60,7 @@ def rbs_singkong_final(hujan_mm, hst):
         elif kategori == "Tinggi":
             return ("🌧️ Perhatian Drainase",
                     "Pastikan tidak terjadi genangan air di lahan.",
-                    "air")
+                    "")
 
         return ("🌱 Masa Pertumbuhan Awal",
                 "Tanaman sedang beradaptasi dengan lingkungan.",
@@ -102,7 +102,7 @@ def rbs_singkong_final(hujan_mm, hst):
         elif kategori == "Tinggi":
             return ("🌧️ Pengawasan Drainase",
                     "Kelebihan air perlu dihindari pada fase umbi.",
-                    "air")
+                    "monitor")
 
         return ("🌾 Masa Pembentukan Umbi",
                 "Tanaman sedang fokus membentuk umbi.",
