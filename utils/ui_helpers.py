@@ -31,4 +31,3 @@ def render_day_button(col, day, label, color, key, selected=False):
     """, unsafe_allow_html=True)
     return clicked
 
-kenapa button tanggal menjadi bertupuk di tiap barisnnya dan terlalu naik sehingga menutupi nama hari
