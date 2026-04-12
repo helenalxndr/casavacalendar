@@ -1,23 +1,31 @@
 import streamlit as st
 
 def render_day_button(col, day, label, color, key, selected=False):
-    # Logika Style
     border = "3px solid #000" if selected else "1px solid #ddd"
     shadow = "0 4px 12px rgba(0,0,0,0.15)" if selected else "0 2px 6px rgba(0,0,0,0.08)"
     
-    # CSS Sakti untuk menyatukan Klik dan Visual
+    # CSS untuk memaksa penumpukan sempurna
     st.markdown(f"""
     <style>
-    /* 1. Paksa container tombol asli Streamlit menjadi 0 height agar elemen di bawahnya naik */
-    div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) {{
-        height: 0px !important;
-        margin-bottom: 0px !important;
-        padding: 0px !important;
-        z-index: 10;
+    /* 1. Targetkan kolom agar menjadi anchor/jangkar */
+    div[data-testid="column"]:has(button[key="btn_{key}"]) {{
         position: relative;
+        height: 95px; /* Kunci: Tinggi kolom dikunci */
     }}
 
-    /* 2. Buat tombol aslinya transparan dan menutupi area 95px ke bawah */
+    /* 2. Paksa pembungkus tombol Streamlit untuk melayang di atas */
+    div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) {{
+        position: absolute !important;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100% !important;
+        z-index: 10; /* Berada di lapisan paling depan */
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+
+    /* 3. Buat tombol aslinya benar-benar bening dan memenuhi kotak */
     div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) button {{
         height: 95px !important;
         width: 100% !important;
@@ -26,31 +34,26 @@ def render_day_button(col, day, label, color, key, selected=False):
         color: transparent !important;
         box-shadow: none !important;
         cursor: pointer;
-        position: relative;
-        top: 0;
     }}
 
-    /* 3. Hilangkan efek hover merah/abu bawaan Streamlit */
+    /* 4. Pastikan tidak ada gangguan saat hover */
     div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) button:hover {{
         background: transparent !important;
-        color: transparent !important;
         border: none !important;
-    }}
-    div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) button:active {{
-        background: transparent !important;
     }}
     </style>
     """, unsafe_allow_html=True)
 
-    # --- RENDER AREA ---
+    # --- EKSEKUSI ---
     
-    # Area Klik (Diletakkan pertama, tapi karena height:0, dia tidak memakan ruang)
+    # Render Button (Sekarang melayang secara absolut)
     clicked = col.button("", key=f"btn_{key}", use_container_width=True)
 
-    # Visual Box (Muncul tepat di posisi yang sama karena elemen di atasnya height:0)
+    # Render Visual (Berada di bawah tombol karena z-index rendah)
     col.markdown(f"""
     <div style="
         height: 95px;
+        width: 100%;
         border-radius: 12px;
         border: {border};
         background-color: {color};
@@ -63,7 +66,6 @@ def render_day_button(col, day, label, color, key, selected=False):
         position: relative;
         z-index: 1;
         pointer-events: none;
-        text-align: center;
     ">
         <div style="font-size:22px; font-weight:800; line-height:1;">
             {day}
@@ -75,3 +77,4 @@ def render_day_button(col, day, label, color, key, selected=False):
     """, unsafe_allow_html=True)
 
     return clicked
+    
