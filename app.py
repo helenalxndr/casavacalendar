@@ -28,11 +28,13 @@ except Exception as e:
 # =========================
 # 2. SESSION STATE
 # =========================
+today = date.today()
+
 if "view_date" not in st.session_state:
-    st.session_state.view_date = date.today().replace(day=1)
+    st.session_state.view_date = today.replace(day=1)
 
 if "selected_day" not in st.session_state:
-    st.session_state.selected_day = date.today().day
+    st.session_state.selected_day = today.day
 
 # =========================
 # 3. SIDEBAR
@@ -42,10 +44,16 @@ st.sidebar.title("⚙️ Pengaturan")
 kec_list = sorted(data["kecamatan"].unique())
 sel_kecamatan = st.sidebar.selectbox("Pilih Kecamatan", kec_list)
 
-tgl_tanam = st.sidebar.date_input(
-    "Tanggal Tanam",
-    value=date.today()
-)
+# MODE TANAM (PENTING)
+use_tanam = st.sidebar.checkbox("Saya sudah menanam", value=False)
+
+if use_tanam:
+    tgl_tanam = st.sidebar.date_input("Tanggal Tanam", value=today)
+else:
+    tgl_tanam = None
+
+if tgl_tanam is None:
+    st.sidebar.info("🌱 Sistem dalam mode rekomendasi waktu tanam (pra-tanam)")
 
 # Encode kecamatan
 try:
@@ -72,6 +80,13 @@ forecast_30 = recursive_forecast(
     days=31
 )
 
+# SAFE FORECAST
+if forecast_30 is None or len(forecast_30) == 0:
+    st.error("Forecast gagal dihasilkan")
+    st.stop()
+
+forecast_30 = np.nan_to_num(forecast_30)
+
 start_pred_date = df_kec["tanggal"].max().date()
 
 # =========================
@@ -84,12 +99,12 @@ col1, col2 = st.columns([3, 1])
 # =========================
 with col1:
 
-    # Navigasi bulan
     n1, n2, n3 = st.columns([1, 2, 1])
 
     with n1:
         if st.button("❮", use_container_width=True):
             st.session_state.view_date -= relativedelta(months=1)
+            st.session_state.selected_day = 1
             st.rerun()
 
     with n2:
@@ -102,6 +117,7 @@ with col1:
     with n3:
         if st.button("❯", use_container_width=True):
             st.session_state.view_date += relativedelta(months=1)
+            st.session_state.selected_day = 1
             st.rerun()
 
     # Header hari
@@ -122,16 +138,29 @@ with col1:
             else:
                 curr_dt = date(cv.year, cv.month, day)
 
-                # HST & forecast index
-                hst = get_hst(curr_dt, tgl_tanam)
+                # SAFE HST
+                if tgl_tanam is None:
+                    hst = -1
+                else:
+                    try:
+                        hst = get_hst(curr_dt, tgl_tanam)
+                    except:
+                        hst = 0
+
+                # SAFE INDEX
                 idx = get_forecast_index(curr_dt, start_pred_date, len(forecast_30))
 
-                hujan_val = forecast_30[idx]
+                if idx < 0:
+                    hujan_val = forecast_30[0]
+                elif idx >= len(forecast_30):
+                    hujan_val = forecast_30[-1]
+                else:
+                    hujan_val = forecast_30[idx]
 
                 # RBS
-                fase, detail, kode= rbs_singkong_final(hujan_val, hst)
+                fase, detail, kode = rbs_singkong_final(hujan_val, hst)
 
-                # Warna aktivitas
+                # Warna
                 color = get_color(kode)
 
                 # Render tombol
@@ -158,28 +187,51 @@ with col2:
 
     active_dt = date(cv.year, cv.month, sd)
 
-    hst = get_hst(active_dt, tgl_tanam)
+    # SAFE HST
+    if tgl_tanam is None:
+        hst = -1
+    else:
+        try:
+            hst = get_hst(active_dt, tgl_tanam)
+        except:
+            hst = 0
+
+    # SAFE INDEX
     idx = get_forecast_index(active_dt, start_pred_date, len(forecast_30))
-    hujan_val = forecast_30[idx]
+
+    if idx < 0:
+        hujan_val = forecast_30[0]
+    elif idx >= len(forecast_30):
+        hujan_val = forecast_30[-1]
+    else:
+        hujan_val = forecast_30[idx]
 
     fase, detail, kode = rbs_singkong_final(hujan_val, hst)
 
-    st.info(
-        f"**Tanggal:** {active_dt.strftime('%d %B %Y')}\n\n"
-        f"**HST:** {hst} hari\n\n"
-        f"**Prediksi Hujan:** {hujan_val:.2f} mm"
-    )
+    # INFO
+    if tgl_tanam is None:
+        st.info(
+            f"**Tanggal:** {active_dt.strftime('%d %B %Y')}\n\n"
+            f"**Mode:** Pra-Tanam\n\n"
+            f"**Prediksi Hujan:** {hujan_val:.2f} mm"
+        )
+    else:
+        st.info(
+            f"**Tanggal:** {active_dt.strftime('%d %B %Y')}\n\n"
+            f"**HST:** {hst} hari\n\n"
+            f"**Prediksi Hujan:** {hujan_val:.2f} mm"
+        )
 
-    st.success(f"**Rekomendasi Fase:**\n{fase}.\n {detail}.")
+    st.success(f"**Rekomendasi:**\n{fase}.\n{detail}")
 
-    st.caption("⚠️ Aktivitas menunjukkan rentang waktu optimal, bukan harus dilakukan setiap hari.")
+    st.caption("⚠️ Aktivitas adalah rekomendasi waktu optimal, bukan keharusan harian.")
 
     st.divider()
 
     st.line_chart(forecast_30)
 
     # =========================
-    # LEGENDA WARNA
+    # LEGENDA
     # =========================
     st.markdown("### 🎨 Keterangan Warna")
 
@@ -190,4 +242,5 @@ with col2:
     🟣 Penyiangan  
     🔴 Pemanenan  
     ⚪ Pemantauan  
+    ⚫ Tunda  
     """)
