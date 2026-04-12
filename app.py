@@ -8,7 +8,7 @@ from dateutil.relativedelta import relativedelta
 # Import modular
 from utils.loader import load_all
 from utils.forecast import recursive_forecast
-from utils.rbs import rbs_singkong_final, label_singkat
+from utils.rbs import rbs_singkong_final,
 from utils.calendar_logic import get_forecast_index, get_hst, get_color
 from utils.ui_helpers import render_day_button
 
@@ -130,16 +130,15 @@ with col1:
 
                 # RBS
                 fase, detail, kode= rbs_singkong_final(hujan_val, hst)
-                label_txt = kode
 
                 # Warna aktivitas
-                color = get_color(label_txt)
+                color = get_color()
 
                 # Render tombol
                 if render_day_button(
                     w_cols[i],
                     day,
-                    label_txt,
+                    kode,
                     color,
                     key=f"{cv.month}_{day}",
                     selected=(day == st.session_state.selected_day)
