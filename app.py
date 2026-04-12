@@ -245,16 +245,18 @@ with col2:
 
     st.divider()
 
-    # --- CHART ---
+    # --- PERBAIKAN CHART ---
     st.markdown("**📈 Proyeksi Curah Hujan 30 Hari Ke Depan**")
 
     chart_data = pd.DataFrame({
-        "Intensitas Hujan (mm)": forecast_30
+        "Hujan": forecast_30
     })
 
-    chart_data.index.name = "Proyeksi Hari Ke-n"
-
+    # Menggunakan parameter x_label dan y_label agar muncul di sumbu
     st.area_chart(
         chart_data,
+        x_label="Proyeksi Hari Ke-n",
+        y_label="Intensitas Hujan (mm)",
+        color="#29b5e8",
         use_container_width=True
     )
