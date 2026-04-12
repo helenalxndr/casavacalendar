@@ -107,7 +107,7 @@ if forecast_30 is None or len(forecast_30) == 0:
 forecast_30 = np.nan_to_num(forecast_30)
 
 start_pred_date = df_kec["tanggal"].max().date()
-st.sidebar.markdown("### 🎨 Keterangan Warna")
+st.sidebar.markdown("### 🎨 Keterangan Warna Rentang Aktivitas")
 st.sidebar.markdown("""
     🟢 Penanaman  
     🔵 Penyiraman  
@@ -207,7 +207,7 @@ with col1:
 # =========================
 with col2:
     st.markdown("### 📋 Detail Hari")
-
+    st.warning("⚠️ **Catatan:** Kegiatan yang muncul merupakan **rentang waktu pelaksanaan**, bukan anjuran untuk dilakukan setiap hari. Sesuaikan kembali dengan kondisi riil di lahan.")
     last_day = calendar.monthrange(cv.year, cv.month)[1]
     sd = min(st.session_state.selected_day, last_day)
     active_dt = date(cv.year, cv.month, sd)
