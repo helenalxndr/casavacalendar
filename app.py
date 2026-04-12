@@ -242,8 +242,6 @@ with col2:
 
     st.success(f"**Rekomendasi:**\n{fase}.\n{detail}")
 
-    st.caption("⚠️ Aktivitas adalah rekomendasi waktu optimal, bukan keharusan harian.")
-
     st.divider()
 
     st.line_chart(forecast_30)
