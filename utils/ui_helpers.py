@@ -19,11 +19,8 @@ def render_day_button(col, day, label, color, key, selected=False):
         box-shadow: {shadow};
         pointer-events: none;
     ">
-        <div style="font-size:22px; font-weight:700;">
+        <div style="font-size:40px; font-weight:700;">
             {day}
-        </div>
-        <div style="font-size:11px; opacity:0.9;">
-            {label}
         </div>
     </div>
     """, unsafe_allow_html=True)
