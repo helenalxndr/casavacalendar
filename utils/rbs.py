@@ -129,10 +129,3 @@ def rbs_singkong_final(hujan_mm, hst):
             "monitor")
 
 
-# =========================
-# LABEL SINGKAT (UNTUK UI)
-# =========================
-def label_singkat(result):
-    if isinstance(result, tuple):
-        return result[0]   # FASE (dipakai UI)
-    return "ℹ️ Pemantauan"
