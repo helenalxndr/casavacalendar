@@ -107,8 +107,8 @@ if forecast_30 is None or len(forecast_30) == 0:
 forecast_30 = np.nan_to_num(forecast_30)
 
 start_pred_date = df_kec["tanggal"].max().date()
-st.markdown("### 🎨 Keterangan Warna")
-st.markdown("""
+st.sidebar.markdown("### 🎨 Keterangan Warna")
+st.sidebar.markdown("""
     🟢 Penanaman  
     🔵 Penyiraman  
     🟡 Pemupukan  
