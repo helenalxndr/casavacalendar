@@ -18,4 +18,4 @@ def get_color(kode):
         "tunda": "#f97316",     # oranye
         "monitor": "#9ca3af"    # abu
     }
-    return color_map.get(kode, "#e5e7eb")
+    return color_map.get(kode)
