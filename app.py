@@ -128,10 +128,10 @@ with col1:
 
     # Grid kalender
     cal_matrix = calendar.monthcalendar(cv.year, cv.month)
-    st.markdown('<div style="margin-bottom: 15px;"></div>', unsafe_allow_html=True)
+    
     for week in cal_matrix:
         w_cols = st.columns(7)
-
+        st.markdown('<div style="margin-bottom: 15px;"></div>', unsafe_allow_html=True)
         for i, day in enumerate(week):
             if day == 0:
                 w_cols[i].write("")
