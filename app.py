@@ -201,17 +201,14 @@ with col1:
                 ):
                     st.session_state.selected_day = day
                     st.rerun()
-
 # =========================
 # 6. DETAIL PANEL
 # =========================
 with col2:
-
     st.markdown("### 📋 Detail Hari")
 
     last_day = calendar.monthrange(cv.year, cv.month)[1]
     sd = min(st.session_state.selected_day, last_day)
-
     active_dt = date(cv.year, cv.month, sd)
 
     # SAFE HST
@@ -225,13 +222,7 @@ with col2:
 
     # SAFE INDEX
     idx = get_forecast_index(active_dt, start_pred_date, len(forecast_30))
-
-    if idx < 0:
-        hujan_val = forecast_30[0]
-    elif idx >= len(forecast_30):
-        hujan_val = forecast_30[-1]
-    else:
-        hujan_val = forecast_30[idx]
+    hujan_val = forecast_30[idx] if 0 <= idx < len(forecast_30) else forecast_30[0]
 
     fase, detail, kode = rbs_singkong_final(hujan_val, hst)
 
@@ -253,5 +244,17 @@ with col2:
 
     st.divider()
 
-    st.line_chart(forecast_30)
+    # --- PENAMBAHAN KETERANGAN CHART ---
+    st.markdown("**📈 Grafik Prediksi Curah Hujan (30 Hari)**")
+    
+    # Membuat DataFrame agar chart memiliki label sumbu yang jelas
+    chart_data = pd.DataFrame({
+        "Hari ke-": np.arange(1, len(forecast_30) + 1),
+        "Curah Hujan (mm)": forecast_30
+    }).set_index("Hari ke-")
+
+    # Menggunakan area_chart agar lebih visual untuk data curah hujan
+    st.area_chart(chart_data, color="#29b5e8")
+    
+    st.caption("Sumbu X: Proyeksi hari ke depan | Sumbu Y: Intensitas hujan (mm)")
 
