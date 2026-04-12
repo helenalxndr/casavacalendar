@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 from utils.loader import load_all
 from utils.forecast import recursive_forecast
 from utils.rbs import rbs_singkong_final
-from utils.calendar_logic import get_forecast_index, get_hst, get_color
+from utils.calendar_logic import get_forecast_index, get_hst, get_colorfst
 from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
@@ -242,19 +242,23 @@ with col2:
 
     st.success(f"**Rekomendasi:**\n{fase}.\n{detail}")
 
-    st.divider()
+st.divider()
 
     # --- PENAMBAHAN KETERANGAN CHART ---
-    st.markdown("**📈 Grafik Prediksi Curah Hujan (30 Hari)**")
+    st.markdown("**📈 Proyeksi Curah Hujan 30 Hari Ke Depan**")
     
-    # Membuat DataFrame agar chart memiliki label sumbu yang jelas
+    # 1. Siapkan data dalam DataFrame
     chart_data = pd.DataFrame({
-        "Hari ke-": np.arange(1, len(forecast_30) + 1),
-        "Curah Hujan (mm)": forecast_30
-    }).set_index("Hari ke-")
-
-    # Menggunakan area_chart agar lebih visual untuk data curah hujan
-    st.area_chart(chart_data, color="#29b5e8")
+        "Intensitas Hujan (mm)": forecast_30  # Nama kolom ini akan jadi label sumbu Y
+    })
     
-    st.caption("Sumbu X: Proyeksi hari ke depan | Sumbu Y: Intensitas hujan (mm)")
+    # 2. Beri nama pada index untuk label sumbu X
+    chart_data.index.name = "Proyeksi Hari Ke-n"
 
+    # 3. Gunakan st.area_chart dengan DataFrame yang sudah berlabel
+    # use_container_width memastikan chart responsif mengikuti lebar col2
+    st.area_chart(
+        chart_data, 
+        color="#29b5e8", 
+        use_container_width=True
+    )
