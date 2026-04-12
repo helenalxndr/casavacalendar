@@ -68,7 +68,7 @@ def rbs_singkong_final(hujan_mm, hst):
 
     # ================= VEGETATIF =================
     if 31 <= hst <= 90:
-        if kategori == "Sedang" and hst <= 60:
+        if kategori == "Sedang" and hst <= 40:
             return ("🌿 Waktu Pemupukan Awal",
                     "Nutrisi tambahan membantu pertumbuhan tanaman lebih kuat.",
                     "pupuk")
