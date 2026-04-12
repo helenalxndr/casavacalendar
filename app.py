@@ -132,7 +132,7 @@ with col1:
                 fase, detail, kode= rbs_singkong_final(hujan_val, hst)
 
                 # Warna aktivitas
-                color = get_color()
+                color = get_color(kode)
 
                 # Render tombol
                 if render_day_button(
