@@ -107,7 +107,16 @@ if forecast_30 is None or len(forecast_30) == 0:
 forecast_30 = np.nan_to_num(forecast_30)
 
 start_pred_date = df_kec["tanggal"].max().date()
-
+st.markdown("### 🎨 Keterangan Warna")
+st.markdown("""
+    🟢 Penanaman  
+    🔵 Penyiraman  
+    🟡 Pemupukan  
+    🟣 Penyiangan  
+    🔴 Pemanenan  
+    ⚪ Pemantauan  
+    ⚫ Tunda  
+    """)
 # =========================
 # 4. LAYOUT
 # =========================
@@ -246,19 +255,3 @@ with col2:
 
     st.line_chart(forecast_30)
 
-    # =========================
-    # LEGENDA
-    # =========================
-    st.markdown("### 🎨 Keterangan Warna")
-
-    st.markdown("""
-    🟢 Penanaman  
-    🔵 Penyiraman  
-    🟡 Pemupukan  
-    🟣 Penyiangan  
-    🔴 Pemanenan  
-    ⚪ Pemantauan  
-    ⚫ Tunda  
-    """)
-
-st.write("DEBUG:", kode, color)
