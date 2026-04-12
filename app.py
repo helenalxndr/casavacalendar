@@ -245,4 +245,4 @@ with col2:
     ⚫ Tunda  
     """)
 
-st.write("DEBUG KODE:", f"'{kode}'")
+st.write("DEBUG:", kode, color)
