@@ -28,7 +28,7 @@ def render_day_button(col, day, label, color, key, selected=False):
     """, unsafe_allow_html=True)
 
     clicked = col.button(
-        f"{day}\n{label}",
+        f"**{day}\n{label}",
         key=key,
         use_container_width=True
     )
