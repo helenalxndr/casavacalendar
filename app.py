@@ -14,7 +14,26 @@ from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
+st.markdown("""
+<style>
+/* GLOBAL STYLE BUTTON OVERLAY */
+div[data-testid="stElementContainer"]:has(button[kind="secondary"]) {
+    position: relative;
+    height: 95px;
+}
 
+div[data-testid="stElementContainer"]:has(button[kind="secondary"]) button {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 95px;
+    opacity: 0;
+    z-index: 10;
+    cursor: pointer;
+}
+</style>
+""", unsafe_allow_html=True)
 # =========================
 # 1. LOAD DATA
 # =========================
