@@ -1,31 +1,32 @@
 import streamlit as st
 
 def render_day_button(col, day, label, color, key, selected=False):
+    # Pengaturan Style
     border = "3px solid #000" if selected else "1px solid #ddd"
     shadow = "0 4px 12px rgba(0,0,0,0.15)" if selected else "0 2px 6px rgba(0,0,0,0.08)"
     
-    # CSS untuk memaksa penumpukan sempurna
+    # CSS Sakti untuk "Ghost Button" (Menghilangkan gap antara tombol dan visual)
     st.markdown(f"""
     <style>
-    /* 1. Targetkan kolom agar menjadi anchor/jangkar */
+    /* 1. Membuat kolom menjadi container relatif agar absolute child-nya terkunci di sini */
     div[data-testid="column"]:has(button[key="btn_{key}"]) {{
         position: relative;
-        height: 95px; /* Kunci: Tinggi kolom dikunci */
+        min-height: 95px;
     }}
 
-    /* 2. Paksa pembungkus tombol Streamlit untuk melayang di atas */
+    /* 2. Menghilangkan ruang fisik pembungkus tombol Streamlit */
     div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) {{
         position: absolute !important;
         top: 0;
         left: 0;
         width: 100%;
         height: 100% !important;
-        z-index: 10; /* Berada di lapisan paling depan */
+        z-index: 10; /* Berada di depan untuk menangkap klik */
         margin: 0 !important;
         padding: 0 !important;
     }}
 
-    /* 3. Buat tombol aslinya benar-benar bening dan memenuhi kotak */
+    /* 3. Membuat tombol bening sempurna menutupi area */
     div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) button {{
         height: 95px !important;
         width: 100% !important;
@@ -36,7 +37,7 @@ def render_day_button(col, day, label, color, key, selected=False):
         cursor: pointer;
     }}
 
-    /* 4. Pastikan tidak ada gangguan saat hover */
+    /* 4. Mencegah perubahan warna saat di-hover agar kotak hijau tidak tertutup abu-abu */
     div[data-testid="stElementContainer"]:has(button[key="btn_{key}"]) button:hover {{
         background: transparent !important;
         border: none !important;
@@ -44,12 +45,12 @@ def render_day_button(col, day, label, color, key, selected=False):
     </style>
     """, unsafe_allow_html=True)
 
-    # --- EKSEKUSI ---
+    # --- PROSES RENDER ---
     
-    # Render Button (Sekarang melayang secara absolut)
+    # Tombol klik (Secara visual tidak terlihat, tapi ada di depan)
     clicked = col.button("", key=f"btn_{key}", use_container_width=True)
 
-    # Render Visual (Berada di bawah tombol karena z-index rendah)
+    # Kotak Visual (Berada tepat di bawah tombol klik)
     col.markdown(f"""
     <div style="
         height: 95px;
@@ -64,8 +65,8 @@ def render_day_button(col, day, label, color, key, selected=False):
         align-items: center;
         box-shadow: {shadow};
         position: relative;
-        z-index: 1;
-        pointer-events: none;
+        z-index: 1; /* Di belakang tombol */
+        pointer-events: none; /* Klik akan menembus ke tombol di depannya */
     ">
         <div style="font-size:22px; font-weight:800; line-height:1;">
             {day}
@@ -77,4 +78,3 @@ def render_day_button(col, day, label, color, key, selected=False):
     """, unsafe_allow_html=True)
 
     return clicked
-    
