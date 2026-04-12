@@ -130,7 +130,7 @@ with col1:
 
                 # RBS
                 fase, detail, kode= rbs_singkong_final(hujan_val, hst)
-                label_txt = label_singkat(kode)
+                label_txt = kode
 
                 # Warna aktivitas
                 color = get_color(label_txt)
