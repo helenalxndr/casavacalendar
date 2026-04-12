@@ -14,7 +14,35 @@ from utils.ui_helpers import render_day_button
 
 st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
+st.markdown("""
+<style>
+/* Container tiap cell kalender */
+.calendar-cell {
+    position: relative;
+    height: 95px;
+}
 
+/* Tombol overlay (klik area) */
+.calendar-cell button {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    height: 95px !important;
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    color: transparent !important;
+    box-shadow: none !important;
+    z-index: 10;
+    cursor: pointer;
+}
+
+/* Hilangkan efek hover abu */
+.calendar-cell button:hover {
+    background: transparent !important;
+}
+</style>
+""", unsafe_allow_html=True)
 # =========================
 # 1. LOAD DATA
 # =========================
