@@ -1,29 +1,26 @@
 def render_day_button(col, day, label, color, key, selected=False):
 
     border = "3px solid #000" if selected else "1px solid #ddd"
-    shadow = "0 4px 12px rgba(0,0,0,0.15)" if selected else "0 2px 6px rgba(0,0,0,0.08)"
+    shadow = "0 4px 10px rgba(0,0,0,0.15)" if selected else "0 2px 5px rgba(0,0,0,0.08)"
 
-    clicked = False
+    clicked = col.button("", key=f"btn_{key}", use_container_width=True)
 
-    # HANDLE CLICK (pakai invisible button)
-    if col.button("", key=f"btn_{key}", use_container_width=True):
-        clicked = True
-
-    # VISUAL CUSTOM (HTML FULL CONTROL)
     col.markdown(f"""
     <div style="
-        margin-top: -80px;
         height: 95px;
         border-radius: 14px;
         border: {border};
         background-color: {color};
         color: white;
+
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
+
         box-shadow: {shadow};
-        pointer-events: none;
+        margin-top: -65px;   /* lebih kecil supaya tidak naik terlalu jauh */
+        margin-bottom: 15px; /* kasih jarak antar baris */
     ">
         <div style="font-size:22px; font-weight:700;">
             {day}
