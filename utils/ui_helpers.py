@@ -20,7 +20,7 @@ def render_day_button(col, day, label, color, key, selected=False):
         pointer-events: none;
     ">
         <div style="font-size:40px; font-weight:700;">
-            {day}
+            {day}\n{kode}
         </div>
     </div>
     """, unsafe_allow_html=True)
