@@ -16,20 +16,21 @@ st.set_page_config(layout="wide", page_title="Dashboard Tanam Singkong")
 
 st.markdown("""
 <style>
-/* GLOBAL STYLE BUTTON OVERLAY */
-div[data-testid="stElementContainer"]:has(button[kind="secondary"]) {
+/* KHUSUS tombol kalender saja */
+.calendar-btn-wrapper {
     position: relative;
     height: 95px;
 }
 
-div[data-testid="stElementContainer"]:has(button[kind="secondary"]) button {
+/* tombol transparan (klik layer) */
+.calendar-btn-wrapper button {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 95px;
     opacity: 0;
-    z-index: 10;
+    z-index: 2;
     cursor: pointer;
 }
 </style>
