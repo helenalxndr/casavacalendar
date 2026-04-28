@@ -16,6 +16,6 @@ def get_color(kode):
         "gulma": "#8b5cf6",     # ungu
         "panen": "#ef4444",     # merah
         "tunda": "#f97316",     # oranye
-        "monitor": "#9ca3af"    # abu
+        "monitor": "EFE3CA"    # beige
     }
     return color_map.get(kode)
