@@ -30,7 +30,7 @@ def render_day_button(col, day, label, color, key, selected=False):
             <div style="font-size:28px; font-weight:700;">
                 {day}
             </div>
-            <div style="font-size:30px; font-weight:700;">
+            <div style="font-size:35px; font-weight:700;">
                 {label}
             </div>
         </div>
