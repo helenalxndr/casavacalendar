@@ -14,7 +14,7 @@ def get_color(kode):
         "air": "#3b82f6",       # biru
         "pupuk": "#f59e0b",     # kuning
         "gulma": "#8b5cf6",     # ungu
-        "panen": "#ef4444",     # merah
+        "panen": "#f8de22",     # merah
         "tunda": "#f97316",     # oranye
         "monitor": "#c0c0c0"    # beige
     }
